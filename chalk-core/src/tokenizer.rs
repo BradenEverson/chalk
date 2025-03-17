@@ -151,4 +151,32 @@ mod tests {
 
         assert!(tokens.is_err())
     }
+
+    #[test]
+    fn go_crazy() {
+        let tokens = "((360 * 9.2) / 0.25) - (5 + 5.0)"
+            .tokenize()
+            .expect("Tokenize valid statement");
+
+        assert_eq!(
+            tokens,
+            [
+                Token::OpenParen,
+                Token::OpenParen,
+                Token::Integer(360),
+                Token::Multiply,
+                Token::Real(9.2),
+                Token::CloseParen,
+                Token::Divide,
+                Token::Real(0.25),
+                Token::CloseParen,
+                Token::Minus,
+                Token::OpenParen,
+                Token::Integer(5),
+                Token::Plus,
+                Token::Real(5.0),
+                Token::CloseParen
+            ]
+        )
+    }
 }
