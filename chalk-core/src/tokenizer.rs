@@ -28,7 +28,7 @@ pub trait Tokenizable {
     /// The error type on tokenization failure
     type Error;
     /// Tokenize the current struct
-    fn tokenize(self) -> Result<Vec<Token>, Self::Error>;
+    fn tokenize(&self) -> Result<Vec<Token>, Self::Error>;
 }
 
 /// Invalid token read while tokenizing
@@ -43,10 +43,13 @@ impl Display for InvalidToken {
 
 impl Error for InvalidToken {}
 
-impl Tokenizable for Vec<char> {
+impl<STR> Tokenizable for STR
+where
+    STR: AsRef<str>,
+{
     type Error = InvalidToken;
-    fn tokenize(self) -> Result<Vec<Token>, Self::Error> {
-        let mut peek = self.into_iter().peekable();
+    fn tokenize(&self) -> Result<Vec<Token>, Self::Error> {
+        let mut peek = self.as_ref().chars().peekable();
         let mut tokens = vec![];
 
         while let Some(c) = peek.next() {
@@ -102,11 +105,7 @@ mod tests {
 
     #[test]
     fn tokenization() {
-        let tokens = "(1+1)"
-            .chars()
-            .collect::<Vec<_>>()
-            .tokenize()
-            .expect("Tokenize statement");
+        let tokens = "(1+1)".tokenize().expect("Tokenize statement");
 
         assert_eq!(
             tokens,
@@ -122,11 +121,7 @@ mod tests {
 
     #[test]
     fn tokenize_real_numbers() {
-        let tokens = "3.1415"
-            .chars()
-            .collect::<Vec<_>>()
-            .tokenize()
-            .expect("Tokenize statement");
+        let tokens = "3.1415".tokenize().expect("Tokenize statement");
 
         assert_eq!(tokens, [Token::Real(3.1415)])
     }
@@ -134,8 +129,6 @@ mod tests {
     #[test]
     fn tokenize_with_whitespace() {
         let tokens = " 1024              /           1.23 "
-            .chars()
-            .collect::<Vec<_>>()
             .tokenize()
             .expect("Tokenize statement");
 
@@ -147,18 +140,14 @@ mod tests {
 
     #[test]
     fn tokenize_larger_numbers() {
-        let tokens = "1024"
-            .chars()
-            .collect::<Vec<_>>()
-            .tokenize()
-            .expect("Tokenize statement");
+        let tokens = "1024".tokenize().expect("Tokenize statement");
 
         assert_eq!(tokens, [Token::Integer(1024)])
     }
 
     #[test]
     fn invalid_tokenization() {
-        let tokens = "1.2.3".chars().collect::<Vec<_>>().tokenize();
+        let tokens = "1.2.3".tokenize();
 
         assert!(tokens.is_err())
     }
