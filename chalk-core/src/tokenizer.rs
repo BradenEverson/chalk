@@ -21,6 +21,8 @@ pub enum Token {
     OpenParen,
     /// Closing parenthesis
     CloseParen,
+    /// End Token
+    EOF,
 }
 
 /// Trait for providing tokenization functionality for a struct
@@ -93,6 +95,7 @@ where
             tokens.push(token);
         }
 
+        tokens.push(Token::EOF);
         Ok(tokens)
     }
 }
@@ -114,7 +117,8 @@ mod tests {
                 Token::Integer(1),
                 Token::Plus,
                 Token::Integer(1),
-                Token::CloseParen
+                Token::CloseParen,
+                Token::EOF
             ]
         )
     }
@@ -123,7 +127,7 @@ mod tests {
     fn tokenize_real_numbers() {
         let tokens = "3.1415".tokenize().expect("Tokenize statement");
 
-        assert_eq!(tokens, [Token::Real(3.1415)])
+        assert_eq!(tokens, [Token::Real(3.1415), Token::EOF])
     }
 
     #[test]
@@ -134,7 +138,12 @@ mod tests {
 
         assert_eq!(
             tokens,
-            [Token::Integer(1024), Token::Divide, Token::Real(1.23)]
+            [
+                Token::Integer(1024),
+                Token::Divide,
+                Token::Real(1.23),
+                Token::EOF
+            ]
         )
     }
 
@@ -142,7 +151,7 @@ mod tests {
     fn tokenize_larger_numbers() {
         let tokens = "1024".tokenize().expect("Tokenize statement");
 
-        assert_eq!(tokens, [Token::Integer(1024)])
+        assert_eq!(tokens, [Token::Integer(1024), Token::EOF])
     }
 
     #[test]
@@ -175,7 +184,8 @@ mod tests {
                 Token::Integer(5),
                 Token::Plus,
                 Token::Real(5.0),
-                Token::CloseParen
+                Token::CloseParen,
+                Token::EOF
             ]
         )
     }
