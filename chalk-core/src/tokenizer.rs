@@ -155,4 +155,11 @@ mod tests {
 
         assert_eq!(tokens, [Token::Integer(1024)])
     }
+
+    #[test]
+    fn invalid_tokenization() {
+        let tokens = "1.2.3".chars().collect::<Vec<_>>().tokenize();
+
+        assert!(tokens.is_err())
+    }
 }
