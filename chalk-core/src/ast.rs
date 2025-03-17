@@ -24,6 +24,17 @@ pub enum Expr {
     Paren(Box<Expr>),
 }
 
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Real(r) => write!(f, "{r}"),
+            Self::Integer(i) => write!(f, "{i}"),
+            Self::BinaryOp { op, left, right } => write!(f, "{left} {op} {right}"),
+            Self::Paren(e) => write!(f, "({e})"),
+        }
+    }
+}
+
 /// All binary operations
 #[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOperator {
@@ -35,6 +46,21 @@ pub enum BinaryOperator {
     Multiply,
     /// Dividing
     Divide,
+}
+
+impl Display for BinaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Add => '+',
+                Self::Subtract => '-',
+                Self::Multiply => '*',
+                Self::Divide => '/',
+            }
+        )
+    }
 }
 
 /// A parser object for wrapping over a token span and keeping track of index during parsing
@@ -99,5 +125,17 @@ mod tests {
         };
 
         assert_eq!(ast, expected);
+    }
+
+    #[test]
+    fn printing_ast() {
+        let test = Expr::Paren(Box::new(Expr::BinaryOp {
+            op: BinaryOperator::Add,
+            left: Box::new(Expr::Integer(1)),
+            right: Box::new(Expr::Real(2.5)),
+        }));
+        let printed = format!("{test}");
+
+        assert_eq!(printed, "(1 + 2.5)")
     }
 }
