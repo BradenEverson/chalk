@@ -14,11 +14,13 @@ Welcome to the Chalk Repl
 
 --> 1 + 1
 2
---> lcm(5!, 7!)
-5040
---> gcd((2^3)!, 17^63)
-15
-
+--> lcm(5!, 12!)
+479001600
+--> gcd((2^3)!, 17^8)
+128
+--> floor(1-1/1000)
+0
+--> 
 ```
 
 `chalk` currently has support for:
