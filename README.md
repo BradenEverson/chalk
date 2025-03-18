@@ -21,6 +21,15 @@ Welcome to the Chalk Repl
 ```
 
 `chalk` currently has support for:
-- Addition, subtraction, multiplication, division, and exponentiation with proper priorities. Parenthesis and Absolute value bars are also supported, as well as unary negation :D
+- Addition
+- Subtraction
+- Multiplication
+- Division
+- Exponentiation
+- Operator precedence
+- Parenthesis and Absolute value bars 
+- Unary negation
+- gcd and lcm
+- floor and ceil
 
 If there are any other operations or features you'd like to see, please feel free to make a Pull Request or create an issue :)
