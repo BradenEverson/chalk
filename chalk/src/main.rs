@@ -5,9 +5,12 @@ use std::{
     io::{Write, stdin},
 };
 
-use chalk_core::{ast::Parser, tokenizer::Tokenizable};
+use chalk_core::{
+    ast::{Expr, Parser},
+    tokenizer::Tokenizable,
+};
 
-fn eval_statement(statement: &str) -> Option<f32> {
+fn eval_statement(statement: &str) -> Option<Expr> {
     let tokens = statement.tokenize();
 
     if tokens.is_err() {
@@ -30,7 +33,7 @@ fn eval_statement(statement: &str) -> Option<f32> {
     }
 
     let ast = ast.unwrap();
-    Some(ast.eval())
+    Some(ast)
 }
 
 fn main() {
@@ -38,7 +41,7 @@ fn main() {
 
     if !statement.is_empty() {
         if let Some(val) = eval_statement(&statement) {
-            println!("{statement} = {val}");
+            println!("{val} = {}", val.eval());
         }
 
         return;
@@ -54,7 +57,7 @@ fn main() {
         let statement = buf.trim();
 
         if let Some(val) = eval_statement(statement) {
-            println!("{val}");
+            println!("{}", val.eval());
         }
     }
 }
