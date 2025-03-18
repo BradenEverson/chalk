@@ -47,7 +47,7 @@ fn main() {
         return;
     }
 
-    println!("Welcome to the Chalk Repl");
+    println!("Welcome to the Chalk Repl\n");
     loop {
         print!("--> ");
         let _ = std::io::stdout().flush();
