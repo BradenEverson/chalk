@@ -114,12 +114,12 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
-    fn peek(&self) -> &Token {
-        &self.tokens[self.current]
+    fn peek(&self) -> Token {
+        self.tokens[self.current]
     }
 
     fn consume(&mut self, tok: &Token) -> Result<(), ParseError> {
-        if self.peek() == tok {
+        if &self.peek() == tok {
             self.current += 1;
             Ok(())
         } else {
@@ -127,24 +127,75 @@ impl Parser {
         }
     }
 
+    fn advance(&mut self) -> Token {
+        let curr = self.peek();
+        self.current += 1;
+        curr
+    }
+
     /// An expression is a `term ( + | - term)*`
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        todo!()
+        let mut start = self.term()?;
+
+        while matches!(self.peek(), Token::Plus | Token::Minus) {
+            let op = match self.advance() {
+                Token::Plus => BinaryOperator::Add,
+                Token::Minus => BinaryOperator::Subtract,
+                _ => unreachable!(),
+            };
+            let right = self.term()?;
+            start = Expr::BinaryOp {
+                op,
+                left: Box::new(start),
+                right: Box::new(right),
+            }
+        }
+
+        Ok(start)
     }
 
     /// A term is a `factor ( * | / factor)*`
     fn term(&mut self) -> Result<Expr, ParseError> {
-        todo!()
+        let mut start = self.factor()?;
+
+        while matches!(self.peek(), Token::Divide | Token::Multiply) {
+            let op = match self.advance() {
+                Token::Divide => BinaryOperator::Divide,
+                Token::Multiply => BinaryOperator::Multiply,
+                _ => unreachable!(),
+            };
+
+            let right = self.factor()?;
+            start = Expr::BinaryOp {
+                op,
+                left: Box::new(start),
+                right: Box::new(right),
+            }
+        }
+
+        Ok(start)
     }
 
     /// A factor is `NUMBER | "(" expression ")"`
     fn factor(&mut self) -> Result<Expr, ParseError> {
-        todo!()
+        match self.advance() {
+            Token::Real(n) => Ok(Expr::Real(n)),
+            Token::Integer(i) => Ok(Expr::Integer(i)),
+            Token::OpenParen => {
+                let inner = self.expression()?;
+                self.consume(&Token::CloseParen)?;
+                Ok(Expr::Paren(Box::new(inner)))
+            }
+            _ => Err(ParseError),
+        }
     }
 
     /// Parses the current token span into an AST
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        todo!("Parse")
+        let expr = self.expression()?;
+        self.consume(&Token::EOF)?;
+
+        Ok(expr)
     }
 }
 
@@ -204,5 +255,13 @@ mod tests {
         let printed = format!("{test}");
 
         assert_eq!(printed, "(1 + 2.5)")
+    }
+
+    #[test]
+    fn full_run_through() {
+        let tokens = "1 + 1 - (2 * 4)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), -6.0);
     }
 }
