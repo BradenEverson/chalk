@@ -29,6 +29,7 @@ Welcome to the Chalk Repl
 - Operator precedence
 - Parenthesis and Absolute value bars 
 - Unary negation
+- Factorial!
 - gcd and lcm
 - floor and ceil
 
