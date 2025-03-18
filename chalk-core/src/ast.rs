@@ -114,6 +114,34 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
+    fn peek(&self) -> &Token {
+        &self.tokens[self.current]
+    }
+
+    fn consume(&mut self, tok: &Token) -> Result<(), ParseError> {
+        if self.peek() == tok {
+            self.current += 1;
+            Ok(())
+        } else {
+            Err(ParseError)
+        }
+    }
+
+    /// An expression is a `term ( + | - term)*`
+    fn expression(&mut self) -> Result<Expr, ParseError> {
+        todo!()
+    }
+
+    /// A term is a `factor ( * | / factor)*`
+    fn term(&mut self) -> Result<Expr, ParseError> {
+        todo!()
+    }
+
+    /// A factor is `NUMBER | "(" expression ")"`
+    fn factor(&mut self) -> Result<Expr, ParseError> {
+        todo!()
+    }
+
     /// Parses the current token span into an AST
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
         todo!("Parse")
