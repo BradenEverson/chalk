@@ -4,9 +4,11 @@ use std::{error::Error, fmt::Display};
 
 /// A token
 #[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Token {
+pub enum Token<'a> {
     /// An integer
     Integer(i32),
+    /// An arbitrary identifier
+    Ident(&'a str),
     /// A floating point number
     Real(f32),
     /// Multiplication sign
@@ -27,6 +29,8 @@ pub enum Token {
     Exclamation,
     /// Bar |
     Bar,
+    /// Comma
+    Comma,
     /// End Token
     EOF,
 }
@@ -36,7 +40,7 @@ pub trait Tokenizable {
     /// The error type on tokenization failure
     type Error;
     /// Tokenize the current struct
-    fn tokenize(&self) -> Result<Vec<Token>, Self::Error>;
+    fn tokenize(&self) -> Result<Vec<Token<'_>>, Self::Error>;
 }
 
 /// Invalid token read while tokenizing
@@ -56,11 +60,11 @@ where
     STR: AsRef<str>,
 {
     type Error = InvalidToken;
-    fn tokenize(&self) -> Result<Vec<Token>, Self::Error> {
-        let mut peek = self.as_ref().chars().peekable();
+    fn tokenize(&self) -> Result<Vec<Token<'_>>, Self::Error> {
+        let mut peek = self.as_ref().chars().enumerate().peekable();
         let mut tokens = vec![];
 
-        while let Some(c) = peek.next() {
+        while let Some((idx, c)) = peek.next() {
             let token = match c {
                 '(' => Token::OpenParen,
                 ')' => Token::CloseParen,
@@ -68,6 +72,7 @@ where
                 '/' | '÷' => Token::Divide,
                 '+' => Token::Plus,
                 '^' => Token::Caret,
+                ',' => Token::Comma,
                 '|' => Token::Bar,
                 '!' => Token::Exclamation,
                 '-' => Token::Minus,
@@ -77,11 +82,11 @@ where
                     curr.push(numeric);
 
                     let mut dot = false;
-                    while let Some(next) = peek.peek() {
+                    while let Some((_, next)) = peek.peek() {
                         if next.is_numeric() {
-                            curr.push(peek.next().unwrap());
+                            curr.push(peek.next().unwrap().1);
                         } else if *next == '.' && !dot {
-                            curr.push(peek.next().unwrap());
+                            curr.push(peek.next().unwrap().1);
                             dot = true;
                         } else {
                             break;
@@ -97,6 +102,22 @@ where
                         // characters are added to it, this cannot fail
                         Token::Integer(curr.parse().unwrap())
                     }
+                }
+
+                character if character.is_alphabetic() => {
+                    let mut end = 0;
+
+                    while let Some((idx2, next)) = peek.peek() {
+                        if !next.is_alphabetic() {
+                            break;
+                        }
+
+                        end = *idx2;
+                        peek.next();
+                    }
+
+                    let word = &self.as_ref()[idx..=end];
+                    Token::Ident(word)
                 }
                 _ => return Err(InvalidToken),
             };
@@ -154,6 +175,53 @@ mod tests {
                 Token::EOF
             ]
         )
+    }
+
+    #[test]
+    fn tokenize_identifier() {
+        let tokens = "hello".tokenize().expect("Tokenize statement");
+
+        assert_eq!(tokens, [Token::Ident("hello"), Token::EOF])
+    }
+
+    #[test]
+    fn practical_identifiers() {
+        let tokens = "gcd(1, 2)".tokenize().expect("Tokenize statement");
+
+        let expected = [
+            Token::Ident("gcd"),
+            Token::OpenParen,
+            Token::Integer(1),
+            Token::Comma,
+            Token::Integer(2),
+            Token::CloseParen,
+            Token::EOF,
+        ];
+
+        assert_eq!(tokens, expected)
+    }
+
+    #[test]
+    fn more_identifiers() {
+        let tokens = "hello these are many identifiers and 1 2 3 numbers"
+            .tokenize()
+            .expect("Tokenize statement");
+
+        let expected = [
+            Token::Ident("hello"),
+            Token::Ident("these"),
+            Token::Ident("are"),
+            Token::Ident("many"),
+            Token::Ident("identifiers"),
+            Token::Ident("and"),
+            Token::Integer(1),
+            Token::Integer(2),
+            Token::Integer(3),
+            Token::Ident("numbers"),
+            Token::EOF,
+        ];
+
+        assert_eq!(tokens, expected)
     }
 
     #[test]

@@ -2,7 +2,10 @@
 
 use std::fmt::Display;
 
-use crate::tokenizer::Token;
+use crate::{
+    math::{gcd::gcd, lcm::lcm},
+    tokenizer::Token,
+};
 
 /// A node in the AST
 #[derive(Clone, Debug, PartialEq)]
@@ -104,6 +107,10 @@ pub enum BinaryOperator {
     Divide,
     /// Exponentiation
     Pow,
+    /// Greatest common divisor (will coerce to integers)
+    Gcd,
+    /// Least common multiple (will coerce to integers)
+    Lcm,
 }
 
 impl BinaryOperator {
@@ -115,6 +122,8 @@ impl BinaryOperator {
             Self::Multiply => left * right,
             Self::Subtract => left - right,
             Self::Pow => left.powf(right),
+            Self::Gcd => gcd(left as usize, right as usize) as f32,
+            Self::Lcm => lcm(left as usize, right as usize) as f32,
         }
     }
 }
@@ -130,6 +139,10 @@ impl Display for BinaryOperator {
                 Self::Multiply => '*',
                 Self::Divide => '/',
                 Self::Pow => '^',
+                // Todo, probably have to move this up into Expr to look better but for now we'll
+                // just do this
+                Self::Lcm => 'l',
+                Self::Gcd => 'g',
             }
         )
     }
@@ -137,8 +150,8 @@ impl Display for BinaryOperator {
 
 /// A parser object for wrapping over a token span and keeping track of index during parsing
 #[derive(Clone, Debug, PartialEq)]
-pub struct Parser {
-    tokens: Vec<Token>,
+pub struct Parser<'a> {
+    tokens: Vec<Token<'a>>,
     current: usize,
 }
 
@@ -152,17 +165,17 @@ impl Display for ParseError {
     }
 }
 
-impl Parser {
+impl<'a> Parser<'a> {
     /// Creates a new parser from a token span
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: Vec<Token<'a>>) -> Self {
         Parser { tokens, current: 0 }
     }
 
-    fn peek(&self) -> Token {
+    fn peek(&self) -> Token<'a> {
         self.tokens[self.current]
     }
 
-    fn consume(&mut self, tok: &Token) -> Result<(), ParseError> {
+    fn consume(&mut self, tok: &Token<'a>) -> Result<(), ParseError> {
         if &self.peek() == tok {
             self.current += 1;
             Ok(())
@@ -171,7 +184,7 @@ impl Parser {
         }
     }
 
-    fn advance(&mut self) -> Token {
+    fn advance(&mut self) -> Token<'a> {
         let curr = self.peek();
         self.current += 1;
         curr
@@ -270,6 +283,36 @@ impl Parser {
                 self.consume(&Token::Bar)?;
                 Ok(Expr::AbsVal(Box::new(inner)))
             }
+            Token::Ident(ident) => match ident {
+                "gcd" => {
+                    self.consume(&Token::OpenParen)?;
+                    let l = self.expression()?;
+                    self.consume(&Token::Comma)?;
+                    let r = self.expression()?;
+                    self.consume(&Token::CloseParen)?;
+
+                    Ok(Expr::BinaryOp {
+                        op: BinaryOperator::Gcd,
+                        left: Box::new(l),
+                        right: Box::new(r),
+                    })
+                }
+
+                "lcm" => {
+                    self.consume(&Token::OpenParen)?;
+                    let l = self.expression()?;
+                    self.consume(&Token::Comma)?;
+                    let r = self.expression()?;
+                    self.consume(&Token::CloseParen)?;
+
+                    Ok(Expr::BinaryOp {
+                        op: BinaryOperator::Lcm,
+                        left: Box::new(l),
+                        right: Box::new(r),
+                    })
+                }
+                _ => Err(ParseError),
+            },
             _ => Err(ParseError),
         }
     }
@@ -413,5 +456,21 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval(), 120.0);
+    }
+
+    #[test]
+    fn gcd() {
+        let tokens = "gcd(15, 20)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 5.0);
+    }
+
+    #[test]
+    fn lcm() {
+        let tokens = "lcm(12, 15)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 60.0);
     }
 }
