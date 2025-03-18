@@ -23,6 +23,8 @@ pub enum Token {
     OpenParen,
     /// Closing parenthesis
     CloseParen,
+    /// Exclamation mark !
+    Exclamation,
     /// Bar |
     Bar,
     /// End Token
@@ -67,6 +69,7 @@ where
                 '+' => Token::Plus,
                 '^' => Token::Caret,
                 '|' => Token::Bar,
+                '!' => Token::Exclamation,
                 '-' => Token::Minus,
                 ws if ws.is_whitespace() => continue,
                 numeric if numeric.is_numeric() => {

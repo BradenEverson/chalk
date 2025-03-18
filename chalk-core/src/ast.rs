@@ -56,7 +56,10 @@ impl Display for Expr {
         match self {
             Self::Real(r) => write!(f, "{r}"),
             Self::Integer(i) => write!(f, "{i}"),
-            Self::UnaryOp { op, node } => write!(f, "{op} {node}"),
+            Self::UnaryOp { op, node } => match op {
+                UnaryOperator::Neg => write!(f, "-{node}"),
+                UnaryOperator::Factorial => write!(f, "{node}!"),
+            },
             Self::BinaryOp { op, left, right } => write!(f, "{left} {op} {right}"),
             Self::Paren(e) => write!(f, "({e})"),
             Self::AbsVal(e) => write!(f, "|{e}|"),
@@ -69,6 +72,8 @@ impl Display for Expr {
 pub enum UnaryOperator {
     /// Negation
     Neg,
+    /// Factorial
+    Factorial,
 }
 
 impl UnaryOperator {
@@ -76,19 +81,13 @@ impl UnaryOperator {
     pub fn eval(&self, expr: f32) -> f32 {
         match self {
             Self::Neg => -expr,
-        }
-    }
-}
-
-impl Display for UnaryOperator {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Neg => '-',
+            Self::Factorial => {
+                if expr < 0.0 {
+                    panic!("Cannot factorial a negative number")
+                }
+                (1..=(expr as u32)).product::<u32>() as f32
             }
-        )
+        }
     }
 }
 
@@ -223,15 +222,29 @@ impl Parser {
 
     /// A power is a `factor (^ factor)*`
     fn power(&mut self) -> Result<Expr, ParseError> {
-        let mut start = self.factor()?;
+        let mut start = self.factorial()?;
 
         while self.peek() == Token::Caret {
             self.advance();
-            let exponent = self.factor()?;
+            let exponent = self.factorial()?;
             start = Expr::BinaryOp {
                 op: BinaryOperator::Pow,
                 left: Box::new(start),
                 right: Box::new(exponent),
+            }
+        }
+
+        Ok(start)
+    }
+
+    /// A factorial is `factor (!)?`
+    fn factorial(&mut self) -> Result<Expr, ParseError> {
+        let mut start = self.factor()?;
+        if self.peek() == Token::Exclamation {
+            self.advance();
+            start = Expr::UnaryOp {
+                op: UnaryOperator::Factorial,
+                node: Box::new(start),
             }
         }
 
@@ -376,5 +389,29 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval(), 81.0);
+    }
+
+    #[test]
+    fn factorial_of_factor() {
+        let tokens = "(4 ^ 0.5 + 3)!".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 120.0);
+    }
+
+    #[test]
+    fn nested_factorial() {
+        let tokens = "(3!)!".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 720.0);
+    }
+
+    #[test]
+    fn factorial() {
+        let tokens = "5!".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 120.0);
     }
 }
