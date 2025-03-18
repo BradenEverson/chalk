@@ -172,31 +172,23 @@ impl Parser {
 
     /// An expression is a `term ( + | - term)* | -(term)`
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        if self.peek() == Token::Minus {
-            self.advance();
-            Ok(Expr::UnaryOp {
-                op: UnaryOperator::Neg,
-                node: Box::new(self.expression()?),
-            })
-        } else {
-            let mut start = self.term()?;
+        let mut start = self.term()?;
 
-            while matches!(self.peek(), Token::Plus | Token::Minus) {
-                let op = match self.advance() {
-                    Token::Plus => BinaryOperator::Add,
-                    Token::Minus => BinaryOperator::Subtract,
-                    _ => unreachable!(),
-                };
-                let right = self.term()?;
-                start = Expr::BinaryOp {
-                    op,
-                    left: Box::new(start),
-                    right: Box::new(right),
-                }
+        while matches!(self.peek(), Token::Plus | Token::Minus) {
+            let op = match self.advance() {
+                Token::Plus => BinaryOperator::Add,
+                Token::Minus => BinaryOperator::Subtract,
+                _ => unreachable!(),
+            };
+            let right = self.term()?;
+            start = Expr::BinaryOp {
+                op,
+                left: Box::new(start),
+                right: Box::new(right),
             }
-
-            Ok(start)
         }
+
+        Ok(start)
     }
 
     /// A term is a `factor ( * | / factor)*`
@@ -224,6 +216,10 @@ impl Parser {
     /// A factor is `NUMBER | "(" expression ")"`
     fn factor(&mut self) -> Result<Expr, ParseError> {
         match self.advance() {
+            Token::Minus => Ok(Expr::UnaryOp {
+                op: UnaryOperator::Neg,
+                node: Box::new(self.factor()?),
+            }),
             Token::Real(n) => Ok(Expr::Real(n)),
             Token::Integer(i) => Ok(Expr::Integer(i)),
             Token::OpenParen => {
@@ -320,7 +316,7 @@ mod tests {
 
     #[test]
     fn negation_operator_more() {
-        let tokens = "(-1) - (-1)".tokenize().expect("Tokenize stream");
+        let tokens = "-1 - -1".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval(), 0.0);
