@@ -12,11 +12,12 @@ Chalk includes the `chalk-core` crate that handles tokenization and parsing, alo
 ```bash
 Welcome to the Chalk Repl
 
---> 1+1
+--> 1 + 1
 2
---> |86^2*-1|
-7396
---> 
+--> lcm(5!, 7!)
+5040
+--> gcd((2^3)!, 17^63)
+15
 
 ```
 
