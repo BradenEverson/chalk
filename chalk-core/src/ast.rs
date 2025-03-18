@@ -24,6 +24,22 @@ pub enum Expr {
     Paren(Box<Expr>),
 }
 
+impl Expr {
+    /// Evaluates an expression
+    pub fn eval(&self) -> f32 {
+        match self {
+            Self::Real(n) => *n,
+            Self::Integer(i) => *i as f32,
+            Self::Paren(inner) => inner.eval(),
+            Self::BinaryOp { op, left, right } => {
+                let left = left.eval();
+                let right = right.eval();
+                op.eval(left, right)
+            }
+        }
+    }
+}
+
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -46,6 +62,18 @@ pub enum BinaryOperator {
     Multiply,
     /// Dividing
     Divide,
+}
+
+impl BinaryOperator {
+    /// Evaluates a left and right value with relation to the current operation
+    pub fn eval(&self, left: f32, right: f32) -> f32 {
+        match self {
+            Self::Add => left + right,
+            Self::Divide => left / right,
+            Self::Multiply => left * right,
+            Self::Subtract => left - right,
+        }
+    }
 }
 
 impl Display for BinaryOperator {
@@ -125,6 +153,17 @@ mod tests {
         };
 
         assert_eq!(ast, expected);
+    }
+
+    #[test]
+    fn evaluating_ast() {
+        let test = Expr::Paren(Box::new(Expr::BinaryOp {
+            op: BinaryOperator::Add,
+            left: Box::new(Expr::Integer(1)),
+            right: Box::new(Expr::Real(2.5)),
+        }));
+
+        assert_eq!(test.eval(), 3.5)
     }
 
     #[test]
