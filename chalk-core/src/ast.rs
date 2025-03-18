@@ -99,6 +99,8 @@ pub enum BinaryOperator {
     Multiply,
     /// Dividing
     Divide,
+    /// Exponentiation
+    Pow,
 }
 
 impl BinaryOperator {
@@ -109,6 +111,7 @@ impl BinaryOperator {
             Self::Divide => left / right,
             Self::Multiply => left * right,
             Self::Subtract => left - right,
+            Self::Pow => left.powf(right),
         }
     }
 }
@@ -123,6 +126,7 @@ impl Display for BinaryOperator {
                 Self::Subtract => '-',
                 Self::Multiply => '*',
                 Self::Divide => '/',
+                Self::Pow => '^',
             }
         )
     }
@@ -170,7 +174,7 @@ impl Parser {
         curr
     }
 
-    /// An expression is a `term ( + | - term)* | -(term)`
+    /// An expression is a `term ( + | - term)* `
     fn expression(&mut self) -> Result<Expr, ParseError> {
         let mut start = self.term()?;
 
@@ -191,9 +195,9 @@ impl Parser {
         Ok(start)
     }
 
-    /// A term is a `factor ( * | / factor)*`
+    /// A term is a `power ( * | / power)*`
     fn term(&mut self) -> Result<Expr, ParseError> {
-        let mut start = self.factor()?;
+        let mut start = self.power()?;
 
         while matches!(self.peek(), Token::Divide | Token::Multiply) {
             let op = match self.advance() {
@@ -202,7 +206,7 @@ impl Parser {
                 _ => unreachable!(),
             };
 
-            let right = self.factor()?;
+            let right = self.power()?;
             start = Expr::BinaryOp {
                 op,
                 left: Box::new(start),
@@ -213,7 +217,24 @@ impl Parser {
         Ok(start)
     }
 
-    /// A factor is `NUMBER | "(" expression ")"`
+    /// A power is a `factor (^ factor)*`
+    fn power(&mut self) -> Result<Expr, ParseError> {
+        let mut start = self.factor()?;
+
+        while self.peek() == Token::Caret {
+            self.advance();
+            let exponent = self.factor()?;
+            start = Expr::BinaryOp {
+                op: BinaryOperator::Pow,
+                left: Box::new(start),
+                right: Box::new(exponent),
+            }
+        }
+
+        Ok(start)
+    }
+
+    /// A factor is `NUMBER | "(" expression ")" | - factor`
     fn factor(&mut self) -> Result<Expr, ParseError> {
         match self.advance() {
             Token::Minus => Ok(Expr::UnaryOp {
@@ -320,5 +341,23 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval(), 0.0);
+    }
+
+    #[test]
+    fn exponentiation_simple() {
+        let tokens = "3 ^ 2".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 9.0);
+    }
+
+    #[test]
+    fn exponentiation_crazy() {
+        let tokens = "((1 + 1 + 1) ^ (6 / 3 ^ 1)) ^ 2"
+            .tokenize()
+            .expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 81.0);
     }
 }

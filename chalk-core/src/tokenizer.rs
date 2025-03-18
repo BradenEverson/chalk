@@ -17,6 +17,8 @@ pub enum Token {
     Plus,
     /// Subtraction sign
     Minus,
+    /// Power caret
+    Caret,
     /// Open parenthesis
     OpenParen,
     /// Closing parenthesis
@@ -61,6 +63,7 @@ where
                 '*' | 'x' => Token::Multiply,
                 '/' | '÷' => Token::Divide,
                 '+' => Token::Plus,
+                '^' => Token::Caret,
                 '-' => Token::Minus,
                 ws if ws.is_whitespace() => continue,
                 numeric if numeric.is_numeric() => {
