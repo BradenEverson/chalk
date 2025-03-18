@@ -29,6 +29,8 @@ pub enum Expr {
     },
     /// Parenthesis around an expr
     Paren(Box<Expr>),
+    /// Absolute value of an expression
+    AbsVal(Box<Expr>),
 }
 
 impl Expr {
@@ -44,6 +46,7 @@ impl Expr {
                 op.eval(left, right)
             }
             Self::UnaryOp { op, node } => op.eval(node.eval()),
+            Self::AbsVal(expr) => f32::abs(expr.eval()),
         }
     }
 }
@@ -56,6 +59,7 @@ impl Display for Expr {
             Self::UnaryOp { op, node } => write!(f, "{op} {node}"),
             Self::BinaryOp { op, left, right } => write!(f, "{left} {op} {right}"),
             Self::Paren(e) => write!(f, "({e})"),
+            Self::AbsVal(e) => write!(f, "|{e}|"),
         }
     }
 }
@@ -234,7 +238,7 @@ impl Parser {
         Ok(start)
     }
 
-    /// A factor is `NUMBER | "(" expression ")" | - factor`
+    /// A factor is `NUMBER | "(" expression ")" | "|" expression "|" | - factor`
     fn factor(&mut self) -> Result<Expr, ParseError> {
         match self.advance() {
             Token::Minus => Ok(Expr::UnaryOp {
@@ -247,6 +251,11 @@ impl Parser {
                 let inner = self.expression()?;
                 self.consume(&Token::CloseParen)?;
                 Ok(Expr::Paren(Box::new(inner)))
+            }
+            Token::Bar => {
+                let inner = self.expression()?;
+                self.consume(&Token::Bar)?;
+                Ok(Expr::AbsVal(Box::new(inner)))
             }
             _ => Err(ParseError),
         }
@@ -341,6 +350,14 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval(), 0.0);
+    }
+
+    #[test]
+    fn absolute_value() {
+        let tokens = "|1 + 1 - (2 * 4)|".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 6.0);
     }
 
     #[test]

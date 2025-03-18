@@ -23,6 +23,8 @@ pub enum Token {
     OpenParen,
     /// Closing parenthesis
     CloseParen,
+    /// Bar |
+    Bar,
     /// End Token
     EOF,
 }
@@ -64,6 +66,7 @@ where
                 '/' | '÷' => Token::Divide,
                 '+' => Token::Plus,
                 '^' => Token::Caret,
+                '|' => Token::Bar,
                 '-' => Token::Minus,
                 ws if ws.is_whitespace() => continue,
                 numeric if numeric.is_numeric() => {
