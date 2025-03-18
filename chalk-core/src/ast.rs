@@ -20,6 +20,13 @@ pub enum Expr {
         /// Right edge
         right: Box<Expr>,
     },
+    /// Unary operator node
+    UnaryOp {
+        /// The operation
+        op: UnaryOperator,
+        /// affected expression
+        node: Box<Expr>,
+    },
     /// Parenthesis around an expr
     Paren(Box<Expr>),
 }
@@ -36,6 +43,7 @@ impl Expr {
                 let right = right.eval();
                 op.eval(left, right)
             }
+            Self::UnaryOp { op, node } => op.eval(node.eval()),
         }
     }
 }
@@ -45,9 +53,38 @@ impl Display for Expr {
         match self {
             Self::Real(r) => write!(f, "{r}"),
             Self::Integer(i) => write!(f, "{i}"),
+            Self::UnaryOp { op, node } => write!(f, "{op} {node}"),
             Self::BinaryOp { op, left, right } => write!(f, "{left} {op} {right}"),
             Self::Paren(e) => write!(f, "({e})"),
         }
+    }
+}
+
+/// All unary operations
+#[derive(Clone, Debug, PartialEq)]
+pub enum UnaryOperator {
+    /// Negation
+    Neg,
+}
+
+impl UnaryOperator {
+    /// Evaluates a left and right value with relation to the current operation
+    pub fn eval(&self, expr: f32) -> f32 {
+        match self {
+            Self::Neg => -expr,
+        }
+    }
+}
+
+impl Display for UnaryOperator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Neg => '-',
+            }
+        )
     }
 }
 
@@ -133,25 +170,33 @@ impl Parser {
         curr
     }
 
-    /// An expression is a `term ( + | - term)*`
+    /// An expression is a `term ( + | - term)* | -(term)`
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        let mut start = self.term()?;
+        if self.peek() == Token::Minus {
+            self.advance();
+            Ok(Expr::UnaryOp {
+                op: UnaryOperator::Neg,
+                node: Box::new(self.expression()?),
+            })
+        } else {
+            let mut start = self.term()?;
 
-        while matches!(self.peek(), Token::Plus | Token::Minus) {
-            let op = match self.advance() {
-                Token::Plus => BinaryOperator::Add,
-                Token::Minus => BinaryOperator::Subtract,
-                _ => unreachable!(),
-            };
-            let right = self.term()?;
-            start = Expr::BinaryOp {
-                op,
-                left: Box::new(start),
-                right: Box::new(right),
+            while matches!(self.peek(), Token::Plus | Token::Minus) {
+                let op = match self.advance() {
+                    Token::Plus => BinaryOperator::Add,
+                    Token::Minus => BinaryOperator::Subtract,
+                    _ => unreachable!(),
+                };
+                let right = self.term()?;
+                start = Expr::BinaryOp {
+                    op,
+                    left: Box::new(start),
+                    right: Box::new(right),
+                }
             }
-        }
 
-        Ok(start)
+            Ok(start)
+        }
     }
 
     /// A term is a `factor ( * | / factor)*`
@@ -263,5 +308,21 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval(), -6.0);
+    }
+
+    #[test]
+    fn negation_operator() {
+        let tokens = "-(1 + 1 - (2 * 4))".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 6.0);
+    }
+
+    #[test]
+    fn negation_operator_more() {
+        let tokens = "(-1) - (-1)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 0.0);
     }
 }
