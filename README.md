@@ -1,7 +1,7 @@
 # Chalk 📋➕
 ## Simple LL Recursive Descent Parser Interpreted Calculator :)
 
-`Chalk` is my first true dive into creating an interpreter, and as such is a simple starting point. While doing my Discrete Math homework this semester, I've wanted a quick calculator I can pull up to evaluate quick expressions in my terminal and had been running Python's repl beforehand. As such, I decided to cook up this tiny project as an alternative. 
+`chalk` is my first true dive into creating an interpreter, and as such is a simple starting point. While doing my Discrete Math homework this semester, I've wanted a quick calculator I can pull up to evaluate quick expressions in my terminal and had been running Python's REPL beforehand. As such, I decided to cook up this tiny project as an alternative. 
 
 Chalk includes the `chalk-core` crate that handles tokenization and parsing, alongside `chalk` which is a CLI tool with two modes of execution:
 
@@ -19,3 +19,7 @@ Welcome to the Chalk Repl
 --> 
 
 ```
+
+`chalk` currently has support for addition, subtraction, multiplication, division, and exponentiation with proper priorities. Parenthesis and Absolute value bars are also supported, as well as unary negation :D
+
+If there are any other operations or features you'd like to see, please feel free to make a Pull Request or create an issue :)
