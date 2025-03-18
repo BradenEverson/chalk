@@ -62,6 +62,8 @@ impl Display for Expr {
             Self::UnaryOp { op, node } => match op {
                 UnaryOperator::Neg => write!(f, "-{node}"),
                 UnaryOperator::Factorial => write!(f, "{node}!"),
+                UnaryOperator::Floor => write!(f, "floor({node})"),
+                UnaryOperator::Ceil => write!(f, "ceil({node})"),
             },
             Self::BinaryOp { op, left, right } => write!(f, "{left} {op} {right}"),
             Self::Paren(e) => write!(f, "({e})"),
@@ -77,6 +79,10 @@ pub enum UnaryOperator {
     Neg,
     /// Factorial
     Factorial,
+    /// Floor function
+    Floor,
+    /// Ceiling function
+    Ceil,
 }
 
 impl UnaryOperator {
@@ -90,6 +96,8 @@ impl UnaryOperator {
                 }
                 (1..=(expr as u32)).product::<u32>() as f32
             }
+            Self::Floor => expr.floor(),
+            Self::Ceil => expr.ceil(),
         }
     }
 }
@@ -316,6 +324,28 @@ impl<'a> Parser<'a> {
                         right: Box::new(r),
                     })
                 }
+
+                "floor" => {
+                    self.consume(&Token::OpenParen)?;
+                    let e = self.expression()?;
+                    self.consume(&Token::CloseParen)?;
+
+                    Ok(Expr::UnaryOp {
+                        op: UnaryOperator::Floor,
+                        node: Box::new(e),
+                    })
+                }
+
+                "ceil" => {
+                    self.consume(&Token::OpenParen)?;
+                    let e = self.expression()?;
+                    self.consume(&Token::CloseParen)?;
+
+                    Ok(Expr::UnaryOp {
+                        op: UnaryOperator::Ceil,
+                        node: Box::new(e),
+                    })
+                }
                 _ => Err(ParseError),
             },
             _ => Err(ParseError),
@@ -477,5 +507,21 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval(), 60.0);
+    }
+
+    #[test]
+    fn floor() {
+        let tokens = "floor(2 - 0.0001)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 1.0);
+    }
+
+    #[test]
+    fn ceil() {
+        let tokens = "ceil(1.1)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval(), 2.0);
     }
 }
