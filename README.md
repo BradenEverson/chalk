@@ -1,4 +1,4 @@
-# Chalk
+# Chalk 📋➕
 ## Simple LL Recursive Descent Parser Interpreted Calculator :)
 
 `Chalk` is my first true dive into creating an interpreter, and as such is a simple starting point. While doing my Discrete Math homework this semester, I've wanted a quick calculator I can pull up to evaluate quick expressions in my terminal and had been running Python's repl beforehand. As such, I decided to cook up this tiny project as an alternative. 
