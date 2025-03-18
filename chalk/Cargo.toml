@@ -1,0 +1,11 @@
+[package]
+name = "chalk"
+version = "0.1.0"
+edition = "2024"
+authors.workspace = true
+
+[dependencies]
+chalk-core = {path = "../chalk-core"}
+
+[lints]
+workspace = true

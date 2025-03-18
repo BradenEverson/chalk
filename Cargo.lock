@@ -3,5 +3,12 @@
 version = 4
 
 [[package]]
+name = "chalk"
+version = "0.1.0"
+dependencies = [
+ "chalk-core",
+]
+
+[[package]]
 name = "chalk-core"
 version = "0.1.0"
