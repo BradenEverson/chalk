@@ -151,7 +151,9 @@ impl Display for BinaryOperator {
 /// A parser object for wrapping over a token span and keeping track of index during parsing
 #[derive(Clone, Debug, PartialEq)]
 pub struct Parser<'a> {
+    /// All tokens in the stream
     tokens: Vec<Token<'a>>,
+    /// The current index
     current: usize,
 }
 
@@ -171,10 +173,12 @@ impl<'a> Parser<'a> {
         Parser { tokens, current: 0 }
     }
 
+    /// Peeks at the next token
     fn peek(&self) -> Token<'a> {
         self.tokens[self.current]
     }
 
+    /// Consumes the next token under the assertion that it is the expected input token
     fn consume(&mut self, tok: &Token<'a>) -> Result<(), ParseError> {
         if &self.peek() == tok {
             self.current += 1;
@@ -184,6 +188,7 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Moves the token stream forward once
     fn advance(&mut self) -> Token<'a> {
         let curr = self.peek();
         self.current += 1;

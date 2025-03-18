@@ -10,6 +10,7 @@ use chalk_core::{
     tokenizer::Tokenizable,
 };
 
+/// Evaluates a statement as a Chalk AST
 fn eval_statement(statement: &str) -> Option<Expr> {
     let tokens = statement.tokenize();
 

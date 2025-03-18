@@ -3,13 +3,14 @@
 /// A prime generation iterator
 #[derive(Default)]
 pub struct PrimeMachine {
+    /// The cache of previous primes for deriving new primes
     cache: Vec<usize>,
 }
 
 impl Iterator for PrimeMachine {
     type Item = usize;
     fn next(&mut self) -> Option<Self::Item> {
-        let next = if self.cache.len() == 0 {
+        let next = if self.cache.is_empty() {
             2
         } else {
             let mut curr = self.cache[self.cache.len() - 1] + 1;
@@ -41,7 +42,7 @@ impl PrimeCheck for usize {
     fn is_prime_with_machine(&self, primes: &mut PrimeMachine) -> bool {
         let num_sqrt = (*self as f32).sqrt() as usize;
 
-        while let Some(prime) = primes.next() {
+        for prime in primes.by_ref() {
             if prime > num_sqrt {
                 break;
             } else if self % prime == 0 {
@@ -66,9 +67,9 @@ impl PrimeFactorizable for usize {
 
         while curr != 1 {
             let curr_sqrt = f32::sqrt(curr as f32).ceil() as usize;
-            let mut primes = PrimeMachine::default();
+            let primes = PrimeMachine::default();
 
-            while let Some(prime) = primes.next() {
+            for prime in primes {
                 if prime > curr_sqrt {
                     factors.push(curr);
                     curr /= curr;
