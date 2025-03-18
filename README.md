@@ -20,6 +20,7 @@ Welcome to the Chalk Repl
 
 ```
 
-`chalk` currently has support for addition, subtraction, multiplication, division, and exponentiation with proper priorities. Parenthesis and Absolute value bars are also supported, as well as unary negation :D
+`chalk` currently has support for:
+- Addition, subtraction, multiplication, division, and exponentiation with proper priorities. Parenthesis and Absolute value bars are also supported, as well as unary negation :D
 
 If there are any other operations or features you'd like to see, please feel free to make a Pull Request or create an issue :)
