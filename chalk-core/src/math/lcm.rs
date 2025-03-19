@@ -27,7 +27,7 @@ pub fn lcm(a: u32, b: u32) -> i32 {
             power.into_iter().max().unwrap_or(0)
         };
 
-        lcm *= val.pow(max as u32);
+        lcm *= val.pow(max);
     }
 
     lcm as i32

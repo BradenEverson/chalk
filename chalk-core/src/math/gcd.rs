@@ -26,7 +26,7 @@ pub fn gcd(a: u32, b: u32) -> i32 {
             power.into_iter().min().unwrap_or(0)
         };
 
-        gcd *= val.pow(min as u32);
+        gcd *= val.pow(min);
     }
 
     gcd as i32
@@ -40,7 +40,7 @@ pub trait Powerable {
 
 impl Powerable for (u32, u32) {
     fn power(&self) -> u32 {
-        self.0.pow(self.1 as u32)
+        self.0.pow(self.1)
     }
 }
 
