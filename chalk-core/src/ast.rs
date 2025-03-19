@@ -630,4 +630,24 @@ mod tests {
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
     }
+
+    #[test]
+    fn and() {
+        let tokens = "(3^3 + 5!) >= 1 && 2 + 2 == 4"
+            .tokenize()
+            .expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+    }
+
+    #[test]
+    fn or() {
+        let tokens = "0 == 1 || (5! - 120 == 0 && 2^10 == 1024)"
+            .tokenize()
+            .expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+    }
 }
