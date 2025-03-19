@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conway's Game of Life</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import init, { MathParser } from "./wasm/chalk_wasm.js";
+        
+        async function run() {
+            await init();
+            const parser = new MathParser();
+
+            while (true) {
+                let expr = prompt("Enter Expression: ");
+                alert(parser.eval(expr))
+            }
+
+        }
+        run();
+    </script>
+</head>
+<body>
+</body>
+</html>

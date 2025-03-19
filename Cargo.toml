@@ -1,5 +1,5 @@
 [workspace]
-members = [ "chalk","chalk-core"]
+members = [ "chalk","chalk-core", "chalk-wasm"]
 resolver = "2"
 
 [workspace.package]
