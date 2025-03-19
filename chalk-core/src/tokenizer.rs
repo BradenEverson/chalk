@@ -45,6 +45,11 @@ pub enum Token<'a> {
     /// Less than or equal to "<="
     Lte,
 
+    /// Logical AND &&
+    And,
+    /// Logical OR ||
+    Or,
+
     /// End Token
     EOF,
 }
@@ -87,7 +92,13 @@ where
                 '+' => Token::Plus,
                 '^' => Token::Caret,
                 ',' => Token::Comma,
-                '|' => Token::Bar,
+                '|' => match peek.peek() {
+                    Some((_, '|')) => {
+                        peek.next();
+                        Token::Or
+                    }
+                    _ => Token::Bar,
+                },
                 '!' => match peek.peek() {
                     Some((_, '=')) => {
                         peek.next();
@@ -95,6 +106,13 @@ where
                     }
                     _ => Token::Exclamation,
                 },
+                '&' => {
+                    if let Some((_, '&')) = peek.next() {
+                        Token::And
+                    } else {
+                        return Err(InvalidToken);
+                    }
+                }
                 '=' => match peek.next() {
                     Some((_, '=')) => Token::Eq,
                     _ => return Err(InvalidToken),

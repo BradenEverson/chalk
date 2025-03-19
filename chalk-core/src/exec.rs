@@ -134,6 +134,9 @@ impl BinaryOperator {
             Self::Gte => Ok(EvalResult::Bool(left.float()? >= right.float()?)),
             Self::Lt => Ok(EvalResult::Bool(left.float()? < right.float()?)),
             Self::Lte => Ok(EvalResult::Bool(left.float()? <= right.float()?)),
+
+            Self::And => Ok(EvalResult::Bool(left.bool()? && right.bool()?)),
+            Self::Or => Ok(EvalResult::Bool(left.bool()? || right.bool()?)),
         }
     }
 }

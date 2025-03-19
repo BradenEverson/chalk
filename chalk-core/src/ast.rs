@@ -56,6 +56,15 @@ impl Display for Expr {
                 BinaryOperator::Lcm => write!(f, "lcm({left}, {right})"),
                 BinaryOperator::Eq => write!(f, "{left} == {right}"),
                 BinaryOperator::NEq => write!(f, "{left} != {right}"),
+
+                BinaryOperator::Gt => write!(f, "{left} > {right}"),
+                BinaryOperator::Lt => write!(f, "{left} < {right}"),
+                BinaryOperator::Gte => write!(f, "{left} >= {right}"),
+                BinaryOperator::Lte => write!(f, "{left} <= {right}"),
+
+                BinaryOperator::Or => write!(f, "{left} || {right}"),
+                BinaryOperator::And => write!(f, "{left} && {right}"),
+
                 _ => write!(f, "{left} {op} {right}"),
             },
             Self::Paren(e) => write!(f, "({e})"),
@@ -137,6 +146,11 @@ pub enum BinaryOperator {
     Gte,
     /// Less than or equal
     Lte,
+
+    /// And
+    And,
+    /// OR
+    Or,
 }
 
 impl TryFrom<&str> for BinaryOperator {
@@ -177,6 +191,9 @@ impl Display for BinaryOperator {
 
                 Self::Gte => 'G',
                 Self::Lte => 'L',
+
+                Self::And => '&',
+                Self::Or => '|',
             }
         )
     }
@@ -229,6 +246,30 @@ impl<'a> Parser<'a> {
         curr
     }
 
+    /// A chain is `comparison ( && | || comparison)`
+    fn chained(&mut self) -> Result<Expr, ParseError> {
+        let mut start = self.comparison()?;
+
+        while matches!(self.peek(), Token::And | Token::Or) {
+            let op = match self.advance() {
+                Token::And => BinaryOperator::And,
+                Token::Or => BinaryOperator::Or,
+                _ => unreachable!(),
+            };
+
+            let right = self.comparison()?;
+
+            start = Expr::BinaryOp {
+                op,
+                left: Box::new(start),
+                right: Box::new(right),
+            }
+        }
+
+        Ok(start)
+    }
+
+    /// A chain is `expression (== | != | > | < | <= | >= expression)?`
     fn comparison(&mut self) -> Result<Expr, ParseError> {
         let mut start = self.expression()?;
 
@@ -342,21 +383,21 @@ impl<'a> Parser<'a> {
             Token::Real(n) => Ok(Expr::Real(n)),
             Token::Integer(i) => Ok(Expr::Integer(i)),
             Token::OpenParen => {
-                let inner = self.expression()?;
+                let inner = self.chained()?;
                 self.consume(&Token::CloseParen)?;
                 Ok(Expr::Paren(Box::new(inner)))
             }
             Token::Bar => {
-                let inner = self.expression()?;
+                let inner = self.chained()?;
                 self.consume(&Token::Bar)?;
                 Ok(Expr::AbsVal(Box::new(inner)))
             }
             Token::Ident(ident) => {
                 if let Ok(op) = BinaryOperator::try_from(ident) {
                     self.consume(&Token::OpenParen)?;
-                    let l = self.expression()?;
+                    let l = self.chained()?;
                     self.consume(&Token::Comma)?;
-                    let r = self.expression()?;
+                    let r = self.chained()?;
                     self.consume(&Token::CloseParen)?;
 
                     Ok(Expr::BinaryOp {
@@ -366,7 +407,7 @@ impl<'a> Parser<'a> {
                     })
                 } else if let Ok(op) = UnaryOperator::try_from(ident) {
                     self.consume(&Token::OpenParen)?;
-                    let node = self.expression()?;
+                    let node = self.chained()?;
                     self.consume(&Token::CloseParen)?;
 
                     Ok(Expr::UnaryOp {
@@ -383,7 +424,7 @@ impl<'a> Parser<'a> {
 
     /// Parses the current token span into an AST
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        let expr = self.comparison()?;
+        let expr = self.chained()?;
         self.consume(&Token::EOF)?;
 
         Ok(expr)
