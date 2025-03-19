@@ -4,11 +4,11 @@
 #[derive(Default)]
 pub struct PrimeMachine {
     /// The cache of previous primes for deriving new primes
-    cache: Vec<usize>,
+    cache: Vec<u32>,
 }
 
 impl Iterator for PrimeMachine {
-    type Item = usize;
+    type Item = u32;
     fn next(&mut self) -> Option<Self::Item> {
         let next = if self.cache.is_empty() {
             2
@@ -38,9 +38,9 @@ pub trait PrimeCheck {
     }
 }
 
-impl PrimeCheck for usize {
+impl PrimeCheck for u32 {
     fn is_prime_with_machine(&self, primes: &mut PrimeMachine) -> bool {
-        let num_sqrt = (*self as f32).sqrt() as usize;
+        let num_sqrt = (*self as f32).sqrt() as u32;
 
         for prime in primes.by_ref() {
             if prime > num_sqrt {
@@ -57,16 +57,16 @@ impl PrimeCheck for usize {
 /// Any type that can be prime factorized
 pub trait PrimeFactorizable {
     /// Generates the prime factors of a number
-    fn prime_factorize(&self) -> Vec<usize>;
+    fn prime_factorize(&self) -> Vec<u32>;
 }
 
-impl PrimeFactorizable for usize {
-    fn prime_factorize(&self) -> Vec<usize> {
+impl PrimeFactorizable for u32 {
+    fn prime_factorize(&self) -> Vec<u32> {
         let mut curr = *self;
         let mut factors = vec![];
 
         while curr != 1 {
-            let curr_sqrt = f32::sqrt(curr as f32).ceil() as usize;
+            let curr_sqrt = f32::sqrt(curr as f32).ceil() as u32;
             let primes = PrimeMachine::default();
 
             for prime in primes {
@@ -89,8 +89,6 @@ impl PrimeFactorizable for usize {
 
 #[cfg(test)]
 mod tests {
-    use std::usize;
-
     use crate::math::prime::PrimeFactorizable;
 
     #[test]
@@ -107,7 +105,7 @@ mod tests {
 
     #[test]
     fn prime_factorize_max_usize() {
-        let factors = usize::MAX.prime_factorize();
-        assert_eq!(factors, &[3, 5, 17, 257, 641, 65537, 6700417]);
+        let factors = u32::MAX.prime_factorize();
+        assert_eq!(factors, &[3, 5, 17, 257, 65537]);
     }
 }

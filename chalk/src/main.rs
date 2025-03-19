@@ -42,7 +42,7 @@ fn main() {
 
     if !statement.is_empty() {
         if let Some(val) = eval_statement(&statement) {
-            println!("{val} = {}", val.eval());
+            println!("{val} = {}", val.eval().unwrap());
         }
 
         return;
@@ -58,7 +58,7 @@ fn main() {
         let statement = buf.trim();
 
         if let Some(val) = eval_statement(statement) {
-            println!("{}", val.eval());
+            println!("{}", val.eval().unwrap());
         }
     }
 }

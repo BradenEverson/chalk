@@ -23,6 +23,7 @@ impl Display for RuntimeError {
 impl Error for RuntimeError {}
 
 /// All results an AST may have
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum EvalResult {
     /// An integer
     Integer(i32),
@@ -38,6 +39,15 @@ impl EvalResult {
         match self {
             Self::Integer(i) => Ok(*i),
             Self::Float(f) if f.round() == *f => Ok(*f as i32),
+            _ => Err(RuntimeError),
+        }
+    }
+
+    /// Gets the result assuming it to be an unsigned int, asserting it so through a runtime error
+    pub fn uint(&self) -> Result<u32, RuntimeError> {
+        match self {
+            Self::Integer(i) if *i >= 0 => Ok(*i as u32),
+            Self::Float(f) if f.round() == *f && *f >= 0.0 => Ok(*f as u32),
             _ => Err(RuntimeError),
         }
     }
@@ -72,50 +82,48 @@ impl Display for EvalResult {
 
 impl UnaryOperator {
     /// Evaluates a left and right value with relation to the current operation
-    pub fn eval(&self, expr: f32) -> f32 {
+    pub fn eval(&self, expr: EvalResult) -> Result<EvalResult, RuntimeError> {
         match self {
-            Self::Neg => -expr,
+            Self::Neg => Ok(EvalResult::Float(-(expr.float()?))),
             Self::Factorial => {
-                if expr < 0.0 {
-                    panic!("Cannot factorial a negative number")
-                }
-                (1..=(expr as u32)).product::<u32>() as f32
+                let expr = expr.uint()?;
+                Ok(EvalResult::Integer((1..=(expr)).product::<u32>() as i32))
             }
-            Self::Floor => expr.floor(),
-            Self::Ceil => expr.ceil(),
+            Self::Floor => Ok(EvalResult::Integer(expr.float()?.floor() as i32)),
+            Self::Ceil => Ok(EvalResult::Integer(expr.float()?.ceil() as i32)),
         }
     }
 }
 
 impl BinaryOperator {
     /// Evaluates a left and right value with relation to the current operation
-    pub fn eval(&self, left: f32, right: f32) -> f32 {
+    pub fn eval(&self, left: EvalResult, right: EvalResult) -> Result<EvalResult, RuntimeError> {
         match self {
-            Self::Add => left + right,
-            Self::Divide => left / right,
-            Self::Multiply => left * right,
-            Self::Subtract => left - right,
-            Self::Pow => left.powf(right),
-            Self::Gcd => gcd(left as usize, right as usize) as f32,
-            Self::Lcm => lcm(left as usize, right as usize) as f32,
+            Self::Add => Ok(EvalResult::Float(left.float()? + right.float()?)),
+            Self::Divide => Ok(EvalResult::Float(left.float()? / right.float()?)),
+            Self::Multiply => Ok(EvalResult::Float(left.float()? * right.float()?)),
+            Self::Subtract => Ok(EvalResult::Float(left.float()? - right.float()?)),
+            Self::Pow => Ok(EvalResult::Float(left.float()?.powf(right.float()?))),
+            Self::Gcd => Ok(EvalResult::Integer(gcd(left.uint()?, right.uint()?))),
+            Self::Lcm => Ok(EvalResult::Integer(lcm(left.uint()?, right.uint()?))),
         }
     }
 }
 
 impl Expr {
     /// Evaluates an expression
-    pub fn eval(&self) -> f32 {
+    pub fn eval(&self) -> Result<EvalResult, RuntimeError> {
         match self {
-            Self::Real(n) => *n,
-            Self::Integer(i) => *i as f32,
+            Self::Real(n) => Ok(EvalResult::Float(*n)),
+            Self::Integer(i) => Ok(EvalResult::Integer(*i)),
             Self::Paren(inner) => inner.eval(),
             Self::BinaryOp { op, left, right } => {
-                let left = left.eval();
-                let right = right.eval();
+                let left = left.eval()?;
+                let right = right.eval()?;
                 op.eval(left, right)
             }
-            Self::UnaryOp { op, node } => op.eval(node.eval()),
-            Self::AbsVal(expr) => f32::abs(expr.eval()),
+            Self::UnaryOp { op, node } => op.eval(node.eval()?),
+            Self::AbsVal(expr) => Ok(EvalResult::Float(f32::abs(expr.eval()?.float()?))),
         }
     }
 }
