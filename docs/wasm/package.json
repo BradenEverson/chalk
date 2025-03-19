@@ -1,0 +1,18 @@
+{
+  "name": "chalk-wasm",
+  "type": "module",
+  "collaborators": [
+    "BradenEverson"
+  ],
+  "version": "0.1.0",
+  "files": [
+    "chalk_wasm_bg.wasm",
+    "chalk_wasm.js",
+    "chalk_wasm.d.ts"
+  ],
+  "main": "chalk_wasm.js",
+  "types": "chalk_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
