@@ -12,15 +12,25 @@ Chalk includes the `chalk-core` crate that handles tokenization and parsing, alo
 ```bash
 Welcome to the Chalk Repl
 
---> 1 + 1
-2
---> lcm(5!, 12!)
-479001600
---> gcd((2^3)!, 17^8)
-128
---> floor(1-1/1000)
-0
---> 
+->> 1 + 1
+`1 + 1` = 2
+
+->> lcm(5!, 12!)
+`lcm(5!, 12!)` = 479001600
+
+->> floor(1 - 1/10000)
+`floor(1 - 1 / 10000)` = 0
+
+->> 10^2 == 100
+`10 ^ 2 == 100` = true
+
+->> 10^2 >= 101 || 5! == 120
+`10 ^ 2 >= 101 || 5! == 120` = true
+
+->> 0 < -1
+`0 < -1` = false
+
+->> 
 ```
 
 `chalk` currently has support for:
@@ -39,6 +49,6 @@ Welcome to the Chalk Repl
 - Extremely simple runtime types system
     - Different operations including `factorial`, `floor`, `ceil`, etc require integers only (and in some cases unsigned only)
     - Enum based type system allows for these assertions and lossless coercions if possible
-    - Next steps now that this system's in place is to add boolean operations >:)
+- Logical operations including Equality and Inequality checks, >, <, >= and <=
 
 If there are any other operations or features you'd like to see, please feel free to make a Pull Request or create an issue :)
