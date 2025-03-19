@@ -94,6 +94,10 @@ impl UnaryOperator {
             Self::Cos => Ok(EvalResult::Float(expr.float()?.cos())),
             Self::Sin => Ok(EvalResult::Float(expr.float()?.sin())),
             Self::Tan => Ok(EvalResult::Float(expr.float()?.tan())),
+
+            Self::ACos => Ok(EvalResult::Float(expr.float()?.acos())),
+            Self::ASin => Ok(EvalResult::Float(expr.float()?.asin())),
+            Self::ATan => Ok(EvalResult::Float(expr.float()?.atan())),
         }
     }
 }

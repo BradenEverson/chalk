@@ -46,6 +46,10 @@ impl Display for Expr {
                 UnaryOperator::Cos => write!(f, "cos({node})"),
                 UnaryOperator::Sin => write!(f, "sin({node})"),
                 UnaryOperator::Tan => write!(f, "tan({node})"),
+
+                UnaryOperator::ACos => write!(f, "acos({node})"),
+                UnaryOperator::ASin => write!(f, "asin({node})"),
+                UnaryOperator::ATan => write!(f, "atan({node})"),
             },
             Self::BinaryOp { op, left, right } => match op {
                 BinaryOperator::Gcd => write!(f, "gcd({left}, {right})"),
@@ -75,6 +79,12 @@ pub enum UnaryOperator {
     Cos,
     /// Sine
     Sin,
+    /// ArcTangent
+    ATan,
+    /// ArcCosine
+    ACos,
+    /// ArcSine
+    ASin,
 }
 
 impl TryFrom<&str> for UnaryOperator {
@@ -88,6 +98,9 @@ impl TryFrom<&str> for UnaryOperator {
             "tan" => Ok(UnaryOperator::Tan),
             "cos" => Ok(UnaryOperator::Cos),
             "sin" => Ok(UnaryOperator::Sin),
+            "atan" => Ok(UnaryOperator::ATan),
+            "acos" => Ok(UnaryOperator::ACos),
+            "asin" => Ok(UnaryOperator::ASin),
             _ => Err(()),
         }
     }
