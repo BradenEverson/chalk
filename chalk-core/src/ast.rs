@@ -11,6 +11,8 @@ pub enum Expr {
     Integer(i32),
     /// Number leaf node (real)
     Real(f32),
+    /// Boolean leaf node
+    Bool(bool),
     /// Binary operator node
     BinaryOp {
         /// The operation
@@ -38,6 +40,7 @@ impl Display for Expr {
         match self {
             Self::Real(r) => write!(f, "{r}"),
             Self::Integer(i) => write!(f, "{i}"),
+            Self::Bool(b) => write!(f, "{b}"),
             Self::UnaryOp { op, node } => match op {
                 UnaryOperator::Neg => write!(f, "-{node}"),
                 UnaryOperator::Factorial => write!(f, "{node}!"),
@@ -390,6 +393,7 @@ impl<'a> Parser<'a> {
             }),
             Token::Real(n) => Ok(Expr::Real(n)),
             Token::Integer(i) => Ok(Expr::Integer(i)),
+            Token::Bool(b) => Ok(Expr::Bool(b)),
             Token::OpenParen => {
                 let inner = self.chained()?;
                 self.consume(&Token::CloseParen)?;

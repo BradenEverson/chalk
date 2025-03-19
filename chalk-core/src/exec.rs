@@ -147,6 +147,7 @@ impl Expr {
         match self {
             Self::Real(n) => Ok(EvalResult::Float(*n)),
             Self::Integer(i) => Ok(EvalResult::Integer(*i)),
+            Self::Bool(b) => Ok(EvalResult::Bool(*b)),
             Self::Paren(inner) => inner.eval(),
             Self::BinaryOp { op, left, right } => {
                 let left = left.eval()?;

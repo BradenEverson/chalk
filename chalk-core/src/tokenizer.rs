@@ -11,6 +11,8 @@ pub enum Token<'a> {
     Ident(&'a str),
     /// A floating point number
     Real(f32),
+    /// A boolean
+    Bool(bool),
     /// Multiplication sign
     Multiply,
     /// Division sign
@@ -176,7 +178,13 @@ where
                     }
 
                     let word = &self.as_ref()[idx..=end];
-                    Token::Ident(word)
+                    if word == "true" {
+                        Token::Bool(true)
+                    } else if word == "false" {
+                        Token::Bool(false)
+                    } else {
+                        Token::Ident(word)
+                    }
                 }
                 _ => return Err(InvalidToken),
             };
