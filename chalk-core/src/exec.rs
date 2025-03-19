@@ -37,6 +37,7 @@ impl EvalResult {
     pub fn int(&self) -> Result<i32, RuntimeError> {
         match self {
             Self::Integer(i) => Ok(*i),
+            Self::Float(f) if f.round() == *f => Ok(*f as i32),
             _ => Err(RuntimeError),
         }
     }
@@ -45,6 +46,7 @@ impl EvalResult {
     pub fn float(&self) -> Result<f32, RuntimeError> {
         match self {
             Self::Float(f) => Ok(*f),
+            Self::Integer(i) => Ok(*i as f32),
             _ => Err(RuntimeError),
         }
     }
