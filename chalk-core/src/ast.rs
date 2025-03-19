@@ -43,6 +43,9 @@ impl Display for Expr {
                 UnaryOperator::Factorial => write!(f, "{node}!"),
                 UnaryOperator::Floor => write!(f, "floor({node})"),
                 UnaryOperator::Ceil => write!(f, "ceil({node})"),
+                UnaryOperator::Cos => write!(f, "cos({node})"),
+                UnaryOperator::Sin => write!(f, "sin({node})"),
+                UnaryOperator::Tan => write!(f, "tan({node})"),
             },
             Self::BinaryOp { op, left, right } => match op {
                 BinaryOperator::Gcd => write!(f, "gcd({left}, {right})"),
@@ -66,6 +69,12 @@ pub enum UnaryOperator {
     Floor,
     /// Ceiling function
     Ceil,
+    /// Tangent
+    Tan,
+    /// Cosine
+    Cos,
+    /// Sine
+    Sin,
 }
 
 /// All binary operations
@@ -294,6 +303,39 @@ impl<'a> Parser<'a> {
 
                     Ok(Expr::UnaryOp {
                         op: UnaryOperator::Ceil,
+                        node: Box::new(e),
+                    })
+                }
+
+                "sin" => {
+                    self.consume(&Token::OpenParen)?;
+                    let e = self.expression()?;
+                    self.consume(&Token::CloseParen)?;
+
+                    Ok(Expr::UnaryOp {
+                        op: UnaryOperator::Sin,
+                        node: Box::new(e),
+                    })
+                }
+
+                "tan" => {
+                    self.consume(&Token::OpenParen)?;
+                    let e = self.expression()?;
+                    self.consume(&Token::CloseParen)?;
+
+                    Ok(Expr::UnaryOp {
+                        op: UnaryOperator::Tan,
+                        node: Box::new(e),
+                    })
+                }
+
+                "cos" => {
+                    self.consume(&Token::OpenParen)?;
+                    let e = self.expression()?;
+                    self.consume(&Token::CloseParen)?;
+
+                    Ok(Expr::UnaryOp {
+                        op: UnaryOperator::Cos,
                         node: Box::new(e),
                     })
                 }

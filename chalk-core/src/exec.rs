@@ -91,6 +91,9 @@ impl UnaryOperator {
             }
             Self::Floor => Ok(EvalResult::Integer(expr.float()?.floor() as i32)),
             Self::Ceil => Ok(EvalResult::Integer(expr.float()?.ceil() as i32)),
+            Self::Cos => Ok(EvalResult::Float(expr.float()?.cos())),
+            Self::Sin => Ok(EvalResult::Float(expr.float()?.sin())),
+            Self::Tan => Ok(EvalResult::Float(expr.float()?.tan())),
         }
     }
 }
