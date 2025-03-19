@@ -33,7 +33,11 @@ Welcome to the Chalk Repl
 - Parenthesis and Absolute value bars 
 - Unary negation
 - Factorial!
-- gcd and lcm
-- floor and ceil
+- `gcd` and `lcm`
+- `floor` and `ceil`
+- Extremely simple runtime types system
+    - Different operations including `factorial`, `floor`, `ceil`, etc require integers only (and in some cases unsigned only)
+    - Enum based type system allows for these assertions and lossless coercions if possible
+    - Next steps now that this system's in place is to add boolean operations >:)
 
 If there are any other operations or features you'd like to see, please feel free to make a Pull Request or create an issue :)
