@@ -42,7 +42,11 @@ fn main() {
 
     if !statement.is_empty() {
         if let Some(val) = eval_statement(&statement) {
-            println!("{val} = {}", val.eval().unwrap());
+            if let Ok(eval) = val.eval() {
+                println!("{val} = {eval}");
+            } else {
+                panic!("Runtime error has occurred on expression `{val}`")
+            }
         }
 
         return;
@@ -50,7 +54,7 @@ fn main() {
 
     println!("Welcome to the Chalk Repl\n");
     loop {
-        print!("--> ");
+        print!("->> ");
         let _ = std::io::stdout().flush();
         let mut buf = String::new();
         stdin().read_line(&mut buf).expect("Failed to read StdIn");
@@ -58,7 +62,11 @@ fn main() {
         let statement = buf.trim();
 
         if let Some(val) = eval_statement(statement) {
-            println!("{}", val.eval().unwrap());
+            if let Ok(eval) = val.eval() {
+                println!("{val} = {eval}");
+            } else {
+                println!("Runtime error has occurred on expression `{val}`")
+            }
         }
     }
 }
