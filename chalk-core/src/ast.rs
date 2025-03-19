@@ -44,7 +44,11 @@ impl Display for Expr {
                 UnaryOperator::Floor => write!(f, "floor({node})"),
                 UnaryOperator::Ceil => write!(f, "ceil({node})"),
             },
-            Self::BinaryOp { op, left, right } => write!(f, "{left} {op} {right}"),
+            Self::BinaryOp { op, left, right } => match op {
+                BinaryOperator::Gcd => write!(f, "gcd({left}, {right})"),
+                BinaryOperator::Lcm => write!(f, "lcm({left}, {right})"),
+                _ => write!(f, "{left} {op} {right}"),
+            },
             Self::Paren(e) => write!(f, "({e})"),
             Self::AbsVal(e) => write!(f, "|{e}|"),
         }
