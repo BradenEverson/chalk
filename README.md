@@ -35,6 +35,7 @@ Welcome to the Chalk Repl
 - Factorial!
 - `gcd` and `lcm`
 - `floor` and `ceil`
+- Trig functions `sin`, `cos` and `tan`
 - Extremely simple runtime types system
     - Different operations including `factorial`, `floor`, `ceil`, etc require integers only (and in some cases unsigned only)
     - Enum based type system allows for these assertions and lossless coercions if possible
