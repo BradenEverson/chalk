@@ -2,10 +2,7 @@
 
 use std::fmt::Display;
 
-use crate::{
-    math::{gcd::gcd, lcm::lcm},
-    tokenizer::Token,
-};
+use crate::tokenizer::Token;
 
 /// A node in the AST
 #[derive(Clone, Debug, PartialEq)]
@@ -34,24 +31,6 @@ pub enum Expr {
     Paren(Box<Expr>),
     /// Absolute value of an expression
     AbsVal(Box<Expr>),
-}
-
-impl Expr {
-    /// Evaluates an expression
-    pub fn eval(&self) -> f32 {
-        match self {
-            Self::Real(n) => *n,
-            Self::Integer(i) => *i as f32,
-            Self::Paren(inner) => inner.eval(),
-            Self::BinaryOp { op, left, right } => {
-                let left = left.eval();
-                let right = right.eval();
-                op.eval(left, right)
-            }
-            Self::UnaryOp { op, node } => op.eval(node.eval()),
-            Self::AbsVal(expr) => f32::abs(expr.eval()),
-        }
-    }
 }
 
 impl Display for Expr {
@@ -85,23 +64,6 @@ pub enum UnaryOperator {
     Ceil,
 }
 
-impl UnaryOperator {
-    /// Evaluates a left and right value with relation to the current operation
-    pub fn eval(&self, expr: f32) -> f32 {
-        match self {
-            Self::Neg => -expr,
-            Self::Factorial => {
-                if expr < 0.0 {
-                    panic!("Cannot factorial a negative number")
-                }
-                (1..=(expr as u32)).product::<u32>() as f32
-            }
-            Self::Floor => expr.floor(),
-            Self::Ceil => expr.ceil(),
-        }
-    }
-}
-
 /// All binary operations
 #[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOperator {
@@ -119,21 +81,6 @@ pub enum BinaryOperator {
     Gcd,
     /// Least common multiple (will coerce to integers)
     Lcm,
-}
-
-impl BinaryOperator {
-    /// Evaluates a left and right value with relation to the current operation
-    pub fn eval(&self, left: f32, right: f32) -> f32 {
-        match self {
-            Self::Add => left + right,
-            Self::Divide => left / right,
-            Self::Multiply => left * right,
-            Self::Subtract => left - right,
-            Self::Pow => left.powf(right),
-            Self::Gcd => gcd(left as usize, right as usize) as f32,
-            Self::Lcm => lcm(left as usize, right as usize) as f32,
-        }
-    }
 }
 
 impl Display for BinaryOperator {
