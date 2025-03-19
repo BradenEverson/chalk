@@ -54,6 +54,8 @@ impl Display for Expr {
             Self::BinaryOp { op, left, right } => match op {
                 BinaryOperator::Gcd => write!(f, "gcd({left}, {right})"),
                 BinaryOperator::Lcm => write!(f, "lcm({left}, {right})"),
+                BinaryOperator::Eq => write!(f, "{left} == {right}"),
+                BinaryOperator::NEq => write!(f, "{left} != {right}"),
                 _ => write!(f, "{left} {op} {right}"),
             },
             Self::Paren(e) => write!(f, "({e})"),

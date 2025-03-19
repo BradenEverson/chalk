@@ -43,7 +43,7 @@ fn main() {
     if !statement.is_empty() {
         if let Some(val) = eval_statement(&statement) {
             if let Ok(eval) = val.eval() {
-                println!("{val} = {eval}");
+                println!("`{val}` = {eval}");
             } else {
                 panic!("Runtime error has occurred on expression `{val}`")
             }
@@ -63,7 +63,7 @@ fn main() {
 
         if let Some(val) = eval_statement(statement) {
             if let Ok(eval) = val.eval() {
-                println!("{val} = {eval}");
+                println!("`{val}` = {eval}");
             } else {
                 println!("Runtime error has occurred on expression `{val}`")
             }
