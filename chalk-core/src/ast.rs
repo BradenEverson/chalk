@@ -129,6 +129,14 @@ pub enum BinaryOperator {
     Eq,
     /// Not equal
     NEq,
+    /// Greater than
+    Gt,
+    /// Less than
+    Lt,
+    /// Greater than or equal
+    Gte,
+    /// Less than or equal
+    Lte,
 }
 
 impl TryFrom<&str> for BinaryOperator {
@@ -158,12 +166,17 @@ impl Display for BinaryOperator {
                 Self::Multiply => '*',
                 Self::Divide => '/',
                 Self::Pow => '^',
+                Self::Gt => '>',
+                Self::Lt => '<',
                 // Todo, probably have to move this up into Expr to look better but for now we'll
                 // just do this
                 Self::Lcm => 'l',
                 Self::Gcd => 'g',
                 Self::Eq => 'e',
                 Self::NEq => 'n',
+
+                Self::Gte => 'G',
+                Self::Lte => 'L',
             }
         )
     }
@@ -216,13 +229,20 @@ impl<'a> Parser<'a> {
         curr
     }
 
-    fn boolean(&mut self) -> Result<Expr, ParseError> {
+    fn comparison(&mut self) -> Result<Expr, ParseError> {
         let mut start = self.expression()?;
 
-        if matches!(self.peek(), Token::Eq | Token::NEq) {
+        if matches!(
+            self.peek(),
+            Token::Eq | Token::NEq | Token::Gt | Token::Lt | Token::Gte | Token::Lte
+        ) {
             let op = match self.advance() {
                 Token::Eq => BinaryOperator::Eq,
                 Token::NEq => BinaryOperator::NEq,
+                Token::Lt => BinaryOperator::Lt,
+                Token::Lte => BinaryOperator::Lte,
+                Token::Gt => BinaryOperator::Gt,
+                Token::Gte => BinaryOperator::Gte,
                 _ => unreachable!(),
             };
 
@@ -363,7 +383,7 @@ impl<'a> Parser<'a> {
 
     /// Parses the current token span into an AST
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        let expr = self.boolean()?;
+        let expr = self.comparison()?;
         self.consume(&Token::EOF)?;
 
         Ok(expr)
@@ -549,6 +569,22 @@ mod tests {
         let tokens = "(1 + 1 - 2*3 + 5!) * 0 + 9 != 9 - 10"
             .tokenize()
             .expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+    }
+
+    #[test]
+    fn lt() {
+        let tokens = "3 * 3! * 0 <= 2 + 7".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+    }
+
+    #[test]
+    fn gt() {
+        let tokens = "3 * 3! >= 2 + 7".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));

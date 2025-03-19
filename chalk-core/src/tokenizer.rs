@@ -36,6 +36,14 @@ pub enum Token<'a> {
     Eq,
     /// Not equals "!="
     NEq,
+    /// Greater than ">"
+    Gt,
+    /// Greater than or equal to ">="
+    Gte,
+    /// Less than "<"
+    Lt,
+    /// Less than or equal to "<="
+    Lte,
 
     /// End Token
     EOF,
@@ -91,6 +99,23 @@ where
                     Some((_, '=')) => Token::Eq,
                     _ => return Err(InvalidToken),
                 },
+
+                '>' => match peek.peek() {
+                    Some((_, '=')) => {
+                        peek.next();
+                        Token::Gte
+                    }
+                    _ => Token::Gt,
+                },
+
+                '<' => match peek.peek() {
+                    Some((_, '=')) => {
+                        peek.next();
+                        Token::Lte
+                    }
+                    _ => Token::Lt,
+                },
+
                 '-' => Token::Minus,
                 ws if ws.is_whitespace() => continue,
                 numeric if numeric.is_numeric() => {
@@ -259,6 +284,44 @@ mod tests {
         let tokens = "1024".tokenize().expect("Tokenize statement");
 
         assert_eq!(tokens, [Token::Integer(1024), Token::EOF])
+    }
+
+    #[test]
+    fn tokenize_lte() {
+        let tokens = "1<=2".tokenize().expect("Tokenize statement");
+
+        assert_eq!(
+            tokens,
+            [Token::Integer(1), Token::Lte, Token::Integer(2), Token::EOF]
+        )
+    }
+    #[test]
+    fn tokenize_gte() {
+        let tokens = "1>=2".tokenize().expect("Tokenize statement");
+
+        assert_eq!(
+            tokens,
+            [Token::Integer(1), Token::Gte, Token::Integer(2), Token::EOF]
+        )
+    }
+
+    #[test]
+    fn tokenize_lt() {
+        let tokens = "1<2".tokenize().expect("Tokenize statement");
+
+        assert_eq!(
+            tokens,
+            [Token::Integer(1), Token::Lt, Token::Integer(2), Token::EOF]
+        )
+    }
+    #[test]
+    fn tokenize_gt() {
+        let tokens = "1>2".tokenize().expect("Tokenize statement");
+
+        assert_eq!(
+            tokens,
+            [Token::Integer(1), Token::Gt, Token::Integer(2), Token::EOF]
+        )
     }
 
     #[test]

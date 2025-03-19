@@ -130,6 +130,10 @@ impl BinaryOperator {
             // Boolean operations
             Self::Eq => Ok(EvalResult::Bool(left == right)),
             Self::NEq => Ok(EvalResult::Bool(left != right)),
+            Self::Gt => Ok(EvalResult::Bool(left.float()? > right.float()?)),
+            Self::Gte => Ok(EvalResult::Bool(left.float()? >= right.float()?)),
+            Self::Lt => Ok(EvalResult::Bool(left.float()? < right.float()?)),
+            Self::Lte => Ok(EvalResult::Bool(left.float()? <= right.float()?)),
         }
     }
 }
