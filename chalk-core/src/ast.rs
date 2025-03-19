@@ -217,7 +217,7 @@ impl<'a> Parser<'a> {
     /// A factorial is `factor (!)?`
     fn factorial(&mut self) -> Result<Expr, ParseError> {
         let mut start = self.factor()?;
-        if self.peek() == Token::Exclamation {
+        while self.peek() == Token::Exclamation {
             self.advance();
             start = Expr::UnaryOp {
                 op: UnaryOperator::Factorial,
@@ -430,7 +430,7 @@ mod tests {
 
     #[test]
     fn nested_factorial() {
-        let tokens = "(3!)!".tokenize().expect("Tokenize stream");
+        let tokens = "3!!".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(720));
