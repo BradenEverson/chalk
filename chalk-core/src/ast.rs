@@ -164,6 +164,14 @@ impl TryFrom<&str> for BinaryOperator {
             "pow" => Ok(BinaryOperator::Pow),
             "gcd" => Ok(BinaryOperator::Gcd),
             "lcm" => Ok(BinaryOperator::Lcm),
+            "eq" => Ok(BinaryOperator::Eq),
+            "neq" => Ok(BinaryOperator::NEq),
+            "gt" => Ok(BinaryOperator::Gt),
+            "lt" => Ok(BinaryOperator::Lt),
+            "gte" => Ok(BinaryOperator::Gte),
+            "lte" => Ok(BinaryOperator::Lte),
+            "and" => Ok(BinaryOperator::And),
+            "or" => Ok(BinaryOperator::Or),
             _ => Err(()),
         }
     }
