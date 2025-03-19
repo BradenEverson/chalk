@@ -123,6 +123,10 @@ pub enum BinaryOperator {
     Gcd,
     /// Least common multiple (will coerce to integers)
     Lcm,
+    /// Equality
+    Eq,
+    /// Not equal
+    NEq,
 }
 
 impl TryFrom<&str> for BinaryOperator {
@@ -156,6 +160,8 @@ impl Display for BinaryOperator {
                 // just do this
                 Self::Lcm => 'l',
                 Self::Gcd => 'g',
+                Self::Eq => 'e',
+                Self::NEq => 'n',
             }
         )
     }
@@ -206,6 +212,28 @@ impl<'a> Parser<'a> {
         let curr = self.peek();
         self.current += 1;
         curr
+    }
+
+    fn boolean(&mut self) -> Result<Expr, ParseError> {
+        let mut start = self.expression()?;
+
+        if matches!(self.peek(), Token::Eq | Token::NEq) {
+            let op = match self.advance() {
+                Token::Eq => BinaryOperator::Eq,
+                Token::NEq => BinaryOperator::NEq,
+                _ => unreachable!(),
+            };
+
+            let right = self.expression()?;
+
+            start = Expr::BinaryOp {
+                op,
+                left: Box::new(start),
+                right: Box::new(right),
+            }
+        }
+
+        Ok(start)
     }
 
     /// An expression is a `term ( + | - term)* `
@@ -333,7 +361,7 @@ impl<'a> Parser<'a> {
 
     /// Parses the current token span into an AST
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        let expr = self.expression()?;
+        let expr = self.boolean()?;
         self.consume(&Token::EOF)?;
 
         Ok(expr)
@@ -502,5 +530,25 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
         assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(2));
+    }
+
+    #[test]
+    fn equality() {
+        let tokens = "(1 + 1 - 2*3 + 5!) * 0 + 9 == 9"
+            .tokenize()
+            .expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+    }
+
+    #[test]
+    fn inequality() {
+        let tokens = "(1 + 1 - 2*3 + 5!) * 0 + 9 != 9 - 10"
+            .tokenize()
+            .expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
     }
 }

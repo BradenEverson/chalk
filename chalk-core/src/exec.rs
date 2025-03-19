@@ -23,7 +23,7 @@ impl Display for RuntimeError {
 impl Error for RuntimeError {}
 
 /// All results an AST may have
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy)]
 pub enum EvalResult {
     /// An integer
     Integer(i32),
@@ -31,6 +31,19 @@ pub enum EvalResult {
     Float(f32),
     /// A bool
     Bool(bool),
+}
+
+impl PartialEq for EvalResult {
+    fn eq(&self, other: &Self) -> bool {
+        match (*self, *other) {
+            (Self::Integer(i1), Self::Integer(i2)) => i1 == i2,
+            (Self::Integer(i1), Self::Float(f1)) => i1 as f32 == f1,
+            (Self::Float(f1), Self::Integer(i1)) => f1 == i1 as f32,
+            (Self::Float(f1), Self::Float(f2)) => f1 == f2,
+            (Self::Bool(b1), Self::Bool(b2)) => b1 == b2,
+            _ => false,
+        }
+    }
 }
 
 impl EvalResult {
@@ -113,6 +126,10 @@ impl BinaryOperator {
             Self::Pow => Ok(EvalResult::Float(left.float()?.powf(right.float()?))),
             Self::Gcd => Ok(EvalResult::Integer(gcd(left.uint()?, right.uint()?))),
             Self::Lcm => Ok(EvalResult::Integer(lcm(left.uint()?, right.uint()?))),
+
+            // Boolean operations
+            Self::Eq => Ok(EvalResult::Bool(left == right)),
+            Self::NEq => Ok(EvalResult::Bool(left != right)),
         }
     }
 }

@@ -31,6 +31,12 @@ pub enum Token<'a> {
     Bar,
     /// Comma
     Comma,
+
+    /// Double equals "=="
+    Eq,
+    /// Not equals "!="
+    NEq,
+
     /// End Token
     EOF,
 }
@@ -74,7 +80,17 @@ where
                 '^' => Token::Caret,
                 ',' => Token::Comma,
                 '|' => Token::Bar,
-                '!' => Token::Exclamation,
+                '!' => match peek.peek() {
+                    Some((_, '=')) => {
+                        peek.next();
+                        Token::NEq
+                    }
+                    _ => Token::Exclamation,
+                },
+                '=' => match peek.next() {
+                    Some((_, '=')) => Token::Eq,
+                    _ => return Err(InvalidToken),
+                },
                 '-' => Token::Minus,
                 ws if ws.is_whitespace() => continue,
                 numeric if numeric.is_numeric() => {
@@ -158,6 +174,20 @@ mod tests {
         let tokens = "3.1415".tokenize().expect("Tokenize statement");
 
         assert_eq!(tokens, [Token::Real(3.1415), Token::EOF])
+    }
+
+    #[test]
+    fn tokenize_double_eq() {
+        let tokens = "==".tokenize().expect("Tokenize statement");
+
+        assert_eq!(tokens, [Token::Eq, Token::EOF])
+    }
+
+    #[test]
+    fn tokenize_not_eq() {
+        let tokens = "!=".tokenize().expect("Tokenize statement");
+
+        assert_eq!(tokens, [Token::NEq, Token::EOF])
     }
 
     #[test]
