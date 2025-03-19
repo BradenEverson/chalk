@@ -77,6 +77,22 @@ pub enum UnaryOperator {
     Sin,
 }
 
+impl TryFrom<&str> for UnaryOperator {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "neg" => Ok(UnaryOperator::Neg),
+            "factorial" => Ok(UnaryOperator::Factorial),
+            "floor" => Ok(UnaryOperator::Floor),
+            "ceil" => Ok(UnaryOperator::Ceil),
+            "tan" => Ok(UnaryOperator::Tan),
+            "cos" => Ok(UnaryOperator::Cos),
+            "sin" => Ok(UnaryOperator::Sin),
+            _ => Err(()),
+        }
+    }
+}
+
 /// All binary operations
 #[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOperator {
@@ -94,6 +110,22 @@ pub enum BinaryOperator {
     Gcd,
     /// Least common multiple (will coerce to integers)
     Lcm,
+}
+
+impl TryFrom<&str> for BinaryOperator {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "add" => Ok(BinaryOperator::Add),
+            "subtract" | "sub" => Ok(BinaryOperator::Subtract),
+            "multiply" | "mul" => Ok(BinaryOperator::Multiply),
+            "divide" | "div" => Ok(BinaryOperator::Divide),
+            "pow" => Ok(BinaryOperator::Pow),
+            "gcd" => Ok(BinaryOperator::Gcd),
+            "lcm" => Ok(BinaryOperator::Lcm),
+            _ => Err(()),
+        }
+    }
 }
 
 impl Display for BinaryOperator {
@@ -256,8 +288,8 @@ impl<'a> Parser<'a> {
                 self.consume(&Token::Bar)?;
                 Ok(Expr::AbsVal(Box::new(inner)))
             }
-            Token::Ident(ident) => match ident {
-                "gcd" => {
+            Token::Ident(ident) => {
+                if let Ok(op) = BinaryOperator::try_from(ident) {
                     self.consume(&Token::OpenParen)?;
                     let l = self.expression()?;
                     self.consume(&Token::Comma)?;
@@ -265,82 +297,23 @@ impl<'a> Parser<'a> {
                     self.consume(&Token::CloseParen)?;
 
                     Ok(Expr::BinaryOp {
-                        op: BinaryOperator::Gcd,
+                        op,
                         left: Box::new(l),
                         right: Box::new(r),
                     })
-                }
-
-                "lcm" => {
+                } else if let Ok(op) = UnaryOperator::try_from(ident) {
                     self.consume(&Token::OpenParen)?;
-                    let l = self.expression()?;
-                    self.consume(&Token::Comma)?;
-                    let r = self.expression()?;
-                    self.consume(&Token::CloseParen)?;
-
-                    Ok(Expr::BinaryOp {
-                        op: BinaryOperator::Lcm,
-                        left: Box::new(l),
-                        right: Box::new(r),
-                    })
-                }
-
-                "floor" => {
-                    self.consume(&Token::OpenParen)?;
-                    let e = self.expression()?;
+                    let node = self.expression()?;
                     self.consume(&Token::CloseParen)?;
 
                     Ok(Expr::UnaryOp {
-                        op: UnaryOperator::Floor,
-                        node: Box::new(e),
+                        op,
+                        node: Box::new(node),
                     })
+                } else {
+                    Err(ParseError)
                 }
-
-                "ceil" => {
-                    self.consume(&Token::OpenParen)?;
-                    let e = self.expression()?;
-                    self.consume(&Token::CloseParen)?;
-
-                    Ok(Expr::UnaryOp {
-                        op: UnaryOperator::Ceil,
-                        node: Box::new(e),
-                    })
-                }
-
-                "sin" => {
-                    self.consume(&Token::OpenParen)?;
-                    let e = self.expression()?;
-                    self.consume(&Token::CloseParen)?;
-
-                    Ok(Expr::UnaryOp {
-                        op: UnaryOperator::Sin,
-                        node: Box::new(e),
-                    })
-                }
-
-                "tan" => {
-                    self.consume(&Token::OpenParen)?;
-                    let e = self.expression()?;
-                    self.consume(&Token::CloseParen)?;
-
-                    Ok(Expr::UnaryOp {
-                        op: UnaryOperator::Tan,
-                        node: Box::new(e),
-                    })
-                }
-
-                "cos" => {
-                    self.consume(&Token::OpenParen)?;
-                    let e = self.expression()?;
-                    self.consume(&Token::CloseParen)?;
-
-                    Ok(Expr::UnaryOp {
-                        op: UnaryOperator::Cos,
-                        node: Box::new(e),
-                    })
-                }
-                _ => Err(ParseError),
-            },
+            }
             _ => Err(ParseError),
         }
     }
