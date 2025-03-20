@@ -46,4 +46,11 @@ mod tests {
         let mut parser = MathParser::new();
         assert_eq!(parser.eval("1 + 1 == 2".to_string()), "true".to_string())
     }
+
+    #[test]
+    fn chained() {
+        let mut parser = MathParser::new();
+        assert_eq!(parser.eval("x = 4".to_string()), "4".to_string());
+        assert_eq!(parser.eval("x + 4".to_string()), "8".to_string());
+    }
 }

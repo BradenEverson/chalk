@@ -3,24 +3,339 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Chalk</title>
+        <title>Chalk Online Graphing Calculator</title>
+        <link rel="stylesheet" href="./style.css"/>
         <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body>
+        <div class="calculator-container">
+            <div id="loading-overlay" class="loading-overlay">
+                <div class="loading-spinner"></div>
+                <div>Loading WASM module...</div>
+            </div>
+
+            <div class="calculator-header">
+                <div class="calculator-title">Chalk Graphing Calculator</div>
+                <div class="calculator-controls">
+                    <button class="control-btn" id="zoom-in" title="Zoom in">+</button>
+                    <button class="control-btn" id="zoom-out" title="Zoom out">-</button>
+                    <button class="control-btn" id="reset-view" title="Reset view">↻</button>
+                </div>
+            </div>
+            <div class="calculator-content">
+                <div class="sidebar">
+                    <div class="expressions-container" id="expressions-container">
+                    </div>
+                    <button class="add-btn" id="add-expression">Add Function</button>
+                </div>
+                <div class="graph-container">
+                    <canvas id="graph-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
         <script type="module">
             import init, { MathParser } from "./wasm/chalk_wasm.js";
 
-        async function run() {
-            await init();
-            const parser = new MathParser();
+            async function initializeCalculator() {
+              try {
+                await init();
+                const parser = new MathParser();
 
-            while (true) {
-                let expr = prompt("Enter Expression: ");
-                alert(parser.eval(expr))
+                document.getElementById('loading-overlay').style.display = 'none';
+
+                startCalculator(parser);
+              } catch (error) {
+                console.error("Failed to initialize WASM module:", error);
+                document.getElementById('loading-overlay').innerHTML = 
+                  `<div>Error loading WASM module: ${error.message}</div>
+                   <button class="add-btn mt-4" onclick="location.reload()">Retry</button>`;
+              }
             }
 
-        }
-        run();
+            function startCalculator(parser) {
+              const canvas = document.getElementById('graph-canvas');
+              const ctx = canvas.getContext('2d');
+              const expressionsContainer = document.getElementById('expressions-container');
+              const addExpressionBtn = document.getElementById('add-expression');
+              const zoomInBtn = document.getElementById('zoom-in');
+              const zoomOutBtn = document.getElementById('zoom-out');
+              const resetViewBtn = document.getElementById('reset-view');
+
+              let expressions = [];
+              let nextId = 2;
+              let zoom = 25;
+              let offset = { x: 0, y: 0 };
+              let isDragging = false;
+              let dragStart = { x: 0, y: 0 };
+
+              function init() {
+                resizeCanvas();
+                renderExpressions();
+                drawGraph();
+
+                window.addEventListener('resize', resizeCanvas);
+                addExpressionBtn.addEventListener('click', addExpression);
+                zoomInBtn.addEventListener('click', () => setZoom(Math.min(100, zoom + 5)));
+                zoomOutBtn.addEventListener('click', () => setZoom(Math.max(5, zoom - 5)));
+                resetViewBtn.addEventListener('click', resetView);
+
+                canvas.addEventListener('mousedown', handleMouseDown);
+                canvas.addEventListener('mousemove', handleMouseMove);
+                canvas.addEventListener('mouseup', handleMouseUp);
+                canvas.addEventListener('mouseleave', handleMouseUp);
+
+                canvas.addEventListener('touchstart', handleTouchStart);
+                canvas.addEventListener('touchmove', handleTouchMove);
+                canvas.addEventListener('touchend', handleTouchEnd);
+              }
+
+              function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                drawGraph();
+              }
+
+              function addExpression() {
+                expressions.push({
+                  id: nextId,
+                  text: "",
+                  color: genColor(),
+                  visible: true
+                });
+                nextId++;
+                renderExpressions();
+                drawGraph();
+              }
+
+              function genColor() {
+                  // Thank you stackoverflow:
+                  // https://stackoverflow.com/questions/5092808/how-do-i-randomly-generate-html-hex-color-codes-using-javascript
+                  return "#000000".replace(/0/g,function(){return (~~(Math.random()*16)).toString(16);});
+              }
+
+              function updateExpression(id, text) {
+                expressions = expressions.map(exp => 
+                  exp.id === id ? { ...exp, text } : exp
+                );
+                drawGraph();
+              }
+
+              function toggleVisibility(id) {
+                expressions = expressions.map(exp => 
+                  exp.id === id ? { ...exp, visible: !exp.visible } : exp
+                );
+                renderExpressions();
+                drawGraph();
+              }
+
+              function removeExpression(id) {
+                expressions = expressions.filter(exp => exp.id !== id);
+                renderExpressions();
+                drawGraph();
+              }
+
+              function resetView() {
+                zoom = 25;
+                offset = { x: 0, y: 0 };
+                drawGraph();
+              }
+
+              function setZoom(newZoom) {
+                zoom = newZoom;
+                drawGraph();
+              }
+
+              function renderExpressions() {
+                expressionsContainer.innerHTML = '';
+
+                expressions.forEach(exp => {
+                  const row = document.createElement('div');
+                  row.className = 'expression-row';
+
+                  const colorDot = document.createElement('div');
+                  colorDot.className = 'color-dot';
+                  colorDot.style.backgroundColor = exp.color;
+                  colorDot.style.opacity = exp.visible ? 1 : 0.3;
+                  colorDot.addEventListener('click', () => toggleVisibility(exp.id));
+
+                  const input = document.createElement('input');
+                  input.className = 'expression-input';
+                  input.value = exp.text;
+                  input.placeholder = 'Enter function...';
+                  input.addEventListener('input', (e) => updateExpression(exp.id, e.target.value));
+
+                  const deleteBtn = document.createElement('button');
+                  deleteBtn.className = 'delete-btn';
+                  deleteBtn.innerHTML = '✕';
+                  deleteBtn.addEventListener('click', () => removeExpression(exp.id));
+
+                  row.appendChild(colorDot);
+                  row.appendChild(input);
+                  row.appendChild(deleteBtn);
+                  expressionsContainer.appendChild(row);
+                });
+              }
+
+              function evaluateExpression(expression) {
+                try {
+                  return parser.eval(expression);
+                } catch (e) {
+                  console.error("Error evaluating expression:", e);
+                  return NaN;
+                }
+              }
+
+              function drawGraph() {
+                if (!canvas) return;
+
+                const width = canvas.width;
+                const height = canvas.height;
+
+                ctx.clearRect(0, 0, width, height);
+
+                const centerX = width / 2 + offset.x;
+                const centerY = height / 2 + offset.y;
+
+                ctx.strokeStyle = "#e5e7eb";
+                ctx.lineWidth = 1;
+
+                const yStep = zoom;
+                const yStart = centerY % yStep;
+                for (let y = yStart; y < height; y += yStep) {
+                  ctx.beginPath();
+                  ctx.moveTo(0, y);
+                  ctx.lineTo(width, y);
+                  ctx.stroke();
+                }
+
+                const xStep = zoom;
+                const xStart = centerX % xStep;
+                for (let x = xStart; x < width; x += xStep) {
+                  ctx.beginPath();
+                  ctx.moveTo(x, 0);
+                  ctx.lineTo(x, height);
+                  ctx.stroke();
+                }
+
+                ctx.strokeStyle = "#9ca3af";
+                ctx.lineWidth = 2;
+
+                ctx.beginPath();
+                ctx.moveTo(0, centerY);
+                ctx.lineTo(width, centerY);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, 0);
+                ctx.lineTo(centerX, height);
+                ctx.stroke();
+
+                ctx.fillStyle = "#4b5563";
+                ctx.font = "12px sans-serif";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "top";
+
+                expressions.forEach(exp => {
+                  if (!exp.visible || !exp.text.trim()) return;
+
+                  ctx.strokeStyle = exp.color;
+                  ctx.lineWidth = 2;
+                  ctx.beginPath();
+
+                  let lastY = null;
+
+                  for (let pixelX = 0; pixelX < width; pixelX++) {
+                    const x = (pixelX - centerX) / zoom;
+
+                    try {
+                       evaluateExpression("x=" + x);
+                       const y = evaluateExpression(exp.text);
+
+                      if (isNaN(y) || !isFinite(y)) {
+                        lastY = null;
+                        continue;
+                      }
+
+                      const pixelY = centerY - y * zoom;
+
+                      if (lastY !== null && Math.abs(pixelY - lastY) > 1000) {
+                        ctx.stroke();
+                        ctx.beginPath();
+                        lastY = null;
+                        continue;
+                      }
+
+                      if (lastY === null) {
+                        ctx.moveTo(pixelX, pixelY);
+                      } else {
+                        ctx.lineTo(pixelX, pixelY);
+                      }
+
+                      lastY = pixelY;
+                    } catch (error) {
+                      lastY = null;
+                      continue;
+                    }
+                  }
+
+                  ctx.stroke();
+                });
+              }
+
+              function handleMouseDown(e) {
+                isDragging = true;
+                dragStart = { 
+                  x: e.clientX - offset.x, 
+                  y: e.clientY - offset.y 
+                };
+              }
+
+              function handleMouseMove(e) {
+                if (!isDragging) return;
+                offset = {
+                  x: e.clientX - dragStart.x,
+                  y: e.clientY - dragStart.y
+                };
+                drawGraph();
+              }
+
+              function handleMouseUp() {
+                isDragging = false;
+              }
+
+              function handleTouchStart(e) {
+                if (e.touches.length === 1) {
+                  isDragging = true;
+                  const touch = e.touches[0];
+                  dragStart = { 
+                    x: touch.clientX - offset.x, 
+                    y: touch.clientY - offset.y 
+                  };
+                  e.preventDefault();
+                }
+              }
+
+              function handleTouchMove(e) {
+                if (!isDragging || e.touches.length !== 1) return;
+                const touch = e.touches[0];
+                offset = {
+                  x: touch.clientX - dragStart.x,
+                  y: touch.clientY - dragStart.y
+                };
+                drawGraph();
+                e.preventDefault();
+              }
+
+              function handleTouchEnd() {
+                isDragging = false;
+              }
+
+              init();
+            }
+
+            initializeCalculator();
         </script>
-    </head>
-    <body>
     </body>
 </html>
