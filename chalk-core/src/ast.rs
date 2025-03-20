@@ -335,14 +335,29 @@ impl<'a> Parser<'a> {
     fn term(&mut self) -> Result<Expr, ParseError> {
         let mut start = self.power()?;
 
-        while matches!(self.peek(), Token::Divide | Token::Multiply) {
+        while matches!(
+            self.peek(),
+            Token::Divide | Token::Multiply | Token::OpenParen
+        ) {
+            let mut paren_mul = false;
             let op = match self.advance() {
                 Token::Divide => BinaryOperator::Divide,
                 Token::Multiply => BinaryOperator::Multiply,
+                Token::OpenParen => {
+                    paren_mul = true;
+                    BinaryOperator::Multiply
+                }
                 _ => unreachable!(),
             };
 
-            let right = self.power()?;
+            let right = if paren_mul {
+                let r = self.chained()?;
+                self.consume(&Token::CloseParen)?;
+                r
+            } else {
+                self.power()?
+            };
+
             start = Expr::BinaryOp {
                 op,
                 left: Box::new(start),
