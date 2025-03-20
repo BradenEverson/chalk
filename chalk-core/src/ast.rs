@@ -363,14 +363,19 @@ impl<'a> Parser<'a> {
 
         while matches!(
             self.peek(),
-            Token::Divide | Token::Multiply | Token::OpenParen
+            Token::Divide | Token::Multiply | Token::OpenParen | Token::Variable(_)
         ) {
+            let mut var = None;
             let mut paren_mul = false;
             let op = match self.advance() {
                 Token::Divide => BinaryOperator::Divide,
                 Token::Multiply => BinaryOperator::Multiply,
                 Token::OpenParen => {
                     paren_mul = true;
+                    BinaryOperator::Multiply
+                }
+                Token::Variable(v) => {
+                    var = Some(v);
                     BinaryOperator::Multiply
                 }
                 _ => unreachable!(),
@@ -380,6 +385,8 @@ impl<'a> Parser<'a> {
                 let r = self.chained()?;
                 self.consume(&Token::CloseParen)?;
                 r
+            } else if let Some(v) = var {
+                Expr::Variable(v)
             } else {
                 self.power()?
             };
