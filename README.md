@@ -18,17 +18,23 @@ Welcome to the Chalk Repl
 ->> lcm(5!, 12!)
 `lcm(5!, 12!)` = 479001600
 
-->> floor(1 - 1/10000)
-`floor(1 - 1 / 10000)` = 0
-
-->> 10^2 == 100
-`10 ^ 2 == 100` = true
+->> floor(1 - 1/100000) == 0
+`floor(1 - 1 / 100000) == 0` = true
 
 ->> 10^2 >= 101 || 5! == 120
 `10 ^ 2 >= 101 || 5! == 120` = true
 
-->> 0 < -1
-`0 < -1` = false
+->> x = 5
+`x = 5` = 5
+
+->> y = x^2
+`y = x ^ 2` = 25
+
+->> x = 2
+`x = 2` = 2
+
+->> y
+`y` = 4
 
 ->> 
 ```
@@ -50,5 +56,7 @@ Welcome to the Chalk Repl
     - Different operations including `factorial`, `floor`, `ceil`, etc require integers only (and in some cases unsigned only)
     - Enum based type system allows for these assertions and lossless coercions if possible
 - Logical operations including Equality and Inequality checks, >, <, >= and <=
+
+- Variable assignment operations with lazy evaluation
 
 If there are any other operations or features you'd like to see, please feel free to make a Pull Request or create an issue :)
