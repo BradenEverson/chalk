@@ -7,6 +7,8 @@ use std::{error::Error, fmt::Display};
 pub enum Token<'a> {
     /// An integer
     Integer(i32),
+    /// A single character variable
+    Variable(char),
     /// An arbitrary identifier
     Ident(&'a str),
     /// A floating point number
@@ -89,7 +91,7 @@ where
             let token = match c {
                 '(' => Token::OpenParen,
                 ')' => Token::CloseParen,
-                '*' | 'x' => Token::Multiply,
+                '*' => Token::Multiply,
                 '/' | '÷' => Token::Divide,
                 '+' => Token::Plus,
                 '^' => Token::Caret,
@@ -166,7 +168,7 @@ where
                 }
 
                 character if character.is_alphabetic() => {
-                    let mut end = 0;
+                    let mut end = idx;
 
                     while let Some((idx2, next)) = peek.peek() {
                         if !next.is_alphabetic() {
@@ -183,7 +185,11 @@ where
                     } else if word == "false" {
                         Token::Bool(false)
                     } else {
-                        Token::Ident(word)
+                        if word.len() == 1 {
+                            Token::Variable(word.chars().nth(0).unwrap())
+                        } else {
+                            Token::Ident(word)
+                        }
                     }
                 }
                 _ => return Err(InvalidToken),
@@ -355,6 +361,13 @@ mod tests {
         let tokens = "1.2.3".tokenize();
 
         assert!(tokens.is_err())
+    }
+
+    #[test]
+    fn variables() {
+        let tokens = "x".tokenize().expect("Tokenize");
+
+        assert_eq!(tokens, [Token::Variable('x'), Token::EOF])
     }
 
     #[test]

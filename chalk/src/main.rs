@@ -7,6 +7,7 @@ use std::{
 
 use chalk_core::{
     ast::{Expr, Parser},
+    exec::Evaluator,
     tokenizer::Tokenizable,
 };
 
@@ -39,10 +40,11 @@ fn eval_statement(statement: &str) -> Option<Expr> {
 
 fn main() {
     let statement = env::args().skip(1).collect::<String>();
+    let mut executor = Evaluator::default();
 
     if !statement.is_empty() {
         if let Some(val) = eval_statement(&statement) {
-            if let Ok(eval) = val.eval() {
+            if let Ok(eval) = executor.exec(&val) {
                 println!("`{val}` = {eval}");
             } else {
                 panic!("Runtime error has occurred on expression `{val}`")
@@ -62,7 +64,7 @@ fn main() {
         let statement = buf.trim();
 
         if let Some(val) = eval_statement(statement) {
-            if let Ok(eval) = val.eval() {
+            if let Ok(eval) = executor.exec(&val) {
                 println!("`{val}` = {eval}\n");
             } else {
                 println!("Runtime error has occurred on expression `{val}`")

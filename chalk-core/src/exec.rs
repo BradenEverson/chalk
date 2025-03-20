@@ -1,6 +1,6 @@
 //! AST Execution/Evaluation
 
-use std::{error::Error, fmt::Display};
+use std::{collections::HashMap, error::Error, fmt::Display};
 
 use crate::{
     ast::{BinaryOperator, Expr, UnaryOperator},
@@ -21,6 +21,31 @@ impl Display for RuntimeError {
 }
 
 impl Error for RuntimeError {}
+
+/// Struct for executing ASTs
+#[derive(Clone, Debug, Default)]
+pub struct Evaluator {
+    ctx: HashMap<char, Expr>,
+}
+
+impl Evaluator {
+    /// Executes an AST
+    pub fn exec(&mut self, ast: &Expr) -> Result<EvalResult, RuntimeError> {
+        match ast {
+            Expr::Real(n) => Ok(EvalResult::Float(*n)),
+            Expr::Integer(i) => Ok(EvalResult::Integer(*i)),
+            Expr::Bool(b) => Ok(EvalResult::Bool(*b)),
+            Expr::Paren(inner) => self.exec(inner),
+            Expr::BinaryOp { op, left, right } => {
+                let left = self.exec(left)?;
+                let right = self.exec(right)?;
+                op.eval(left, right)
+            }
+            Expr::UnaryOp { op, node } => op.eval(self.exec(node)?),
+            Expr::AbsVal(expr) => Ok(EvalResult::Float(f32::abs(self.exec(expr)?.float()?))),
+        }
+    }
+}
 
 /// All results an AST may have
 #[derive(Debug, Clone, Copy)]
@@ -137,25 +162,6 @@ impl BinaryOperator {
 
             Self::And => Ok(EvalResult::Bool(left.bool()? && right.bool()?)),
             Self::Or => Ok(EvalResult::Bool(left.bool()? || right.bool()?)),
-        }
-    }
-}
-
-impl Expr {
-    /// Evaluates an expression
-    pub fn eval(&self) -> Result<EvalResult, RuntimeError> {
-        match self {
-            Self::Real(n) => Ok(EvalResult::Float(*n)),
-            Self::Integer(i) => Ok(EvalResult::Integer(*i)),
-            Self::Bool(b) => Ok(EvalResult::Bool(*b)),
-            Self::Paren(inner) => inner.eval(),
-            Self::BinaryOp { op, left, right } => {
-                let left = left.eval()?;
-                let right = right.eval()?;
-                op.eval(left, right)
-            }
-            Self::UnaryOp { op, node } => op.eval(node.eval()?),
-            Self::AbsVal(expr) => Ok(EvalResult::Float(f32::abs(expr.eval()?.float()?))),
         }
     }
 }

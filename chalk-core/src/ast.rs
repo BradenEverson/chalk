@@ -460,7 +460,10 @@ impl<'a> Parser<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{exec::EvalResult, tokenizer::Tokenizable};
+    use crate::{
+        exec::{EvalResult, Evaluator},
+        tokenizer::Tokenizable,
+    };
 
     use super::*;
 
@@ -500,8 +503,9 @@ mod tests {
             left: Box::new(Expr::Integer(1)),
             right: Box::new(Expr::Real(2.5)),
         }));
+        let mut executor = Evaluator::default();
 
-        assert_eq!(test.eval().expect("Eval"), EvalResult::Float(3.5))
+        assert_eq!(executor.exec(&test).expect("Eval"), EvalResult::Float(3.5))
     }
 
     #[test]
@@ -521,7 +525,9 @@ mod tests {
         let tokens = "1 + 1 - (2 * 4)".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Float(-6.0));
+        let mut executor = Evaluator::default();
+
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Float(-6.0));
     }
 
     #[test]
@@ -529,7 +535,8 @@ mod tests {
         let tokens = "-(1 + 1 - (2 * 4))".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Float(6.0));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Float(6.0));
     }
 
     #[test]
@@ -537,7 +544,8 @@ mod tests {
         let tokens = "-1 - -1".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Float(0.0));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Float(0.0));
     }
 
     #[test]
@@ -545,7 +553,8 @@ mod tests {
         let tokens = "|1 + 1 - (2 * 4)|".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Float(6.0));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Float(6.0));
     }
 
     #[test]
@@ -553,7 +562,8 @@ mod tests {
         let tokens = "3 ^ 2".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Float(9.0));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Float(9.0));
     }
 
     #[test]
@@ -563,7 +573,8 @@ mod tests {
             .expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Float(81.0));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Float(81.0));
     }
 
     #[test]
@@ -571,7 +582,8 @@ mod tests {
         let tokens = "(4 ^ 0.5 + 3)!".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(120));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(120));
     }
 
     #[test]
@@ -579,7 +591,8 @@ mod tests {
         let tokens = "3!!".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(720));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(720));
     }
 
     #[test]
@@ -587,7 +600,8 @@ mod tests {
         let tokens = "5!".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(120));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(120));
     }
 
     #[test]
@@ -595,7 +609,8 @@ mod tests {
         let tokens = "gcd(15, 20)".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(5));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(5));
     }
 
     #[test]
@@ -603,7 +618,8 @@ mod tests {
         let tokens = "lcm(12, 15)".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(60));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(60));
     }
 
     #[test]
@@ -611,7 +627,8 @@ mod tests {
         let tokens = "floor(2 - 0.0001)".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(1));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(1));
     }
 
     #[test]
@@ -619,7 +636,8 @@ mod tests {
         let tokens = "ceil(1.1)".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Integer(2));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(2));
     }
 
     #[test]
@@ -629,7 +647,8 @@ mod tests {
             .expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Bool(true));
     }
 
     #[test]
@@ -639,7 +658,8 @@ mod tests {
             .expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Bool(true));
     }
 
     #[test]
@@ -647,7 +667,8 @@ mod tests {
         let tokens = "3 * 3! * 0 <= 2 + 7".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Bool(true));
     }
 
     #[test]
@@ -655,7 +676,8 @@ mod tests {
         let tokens = "3 * 3! >= 2 + 7".tokenize().expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Bool(true));
     }
 
     #[test]
@@ -665,7 +687,8 @@ mod tests {
             .expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Bool(true));
     }
 
     #[test]
@@ -675,6 +698,7 @@ mod tests {
             .expect("Tokenize stream");
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().expect("Failed to parse");
-        assert_eq!(ast.eval().expect("Eval"), EvalResult::Bool(true));
+        let mut executor = Evaluator::default();
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Bool(true));
     }
 }
