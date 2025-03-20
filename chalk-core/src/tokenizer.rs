@@ -35,6 +35,8 @@ pub enum Token<'a> {
     Bar,
     /// Comma
     Comma,
+    /// Assignment operator "="
+    Assign,
 
     /// Double equals "=="
     Eq,
@@ -117,9 +119,12 @@ where
                         return Err(InvalidToken);
                     }
                 }
-                '=' => match peek.next() {
-                    Some((_, '=')) => Token::Eq,
-                    _ => return Err(InvalidToken),
+                '=' => match peek.peek() {
+                    Some((_, '=')) => {
+                        peek.next();
+                        Token::Eq
+                    }
+                    _ => Token::Assign,
                 },
 
                 '>' => match peek.peek() {

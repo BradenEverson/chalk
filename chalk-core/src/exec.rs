@@ -25,13 +25,25 @@ impl Error for RuntimeError {}
 /// Struct for executing ASTs
 #[derive(Clone, Debug, Default)]
 pub struct Evaluator {
-    ctx: HashMap<char, Expr>,
+    pub(crate) ctx: HashMap<char, Expr>,
 }
 
 impl Evaluator {
     /// Executes an AST
     pub fn exec(&mut self, ast: &Expr) -> Result<EvalResult, RuntimeError> {
         match ast {
+            Expr::Variable(v) => {
+                if let Some(e) = self.ctx.get(v).cloned() {
+                    self.exec(&e)
+                } else {
+                    Err(RuntimeError)
+                }
+            }
+            Expr::Assignment(v, node) => {
+                let entry = self.ctx.entry(*v).or_insert(Expr::Integer(0));
+                *entry = *node.clone();
+                self.exec(node)
+            }
             Expr::Real(n) => Ok(EvalResult::Float(*n)),
             Expr::Integer(i) => Ok(EvalResult::Integer(*i)),
             Expr::Bool(b) => Ok(EvalResult::Bool(*b)),

@@ -7,6 +7,10 @@ use crate::tokenizer::Token;
 /// A node in the AST
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
+    /// Assignment from a variable to an expr
+    Assignment(char, Box<Expr>),
+    /// A variable replacement
+    Variable(char),
     /// Number leaf node (integer)
     Integer(i32),
     /// Number leaf node (real)
@@ -38,6 +42,8 @@ pub enum Expr {
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Variable(v) => write!(f, "{v}"),
+            Self::Assignment(v, node) => write!(f, "{v} = {node}"),
             Self::Real(r) => write!(f, "{r}"),
             Self::Integer(i) => write!(f, "{i}"),
             Self::Bool(b) => write!(f, "{b}"),
@@ -240,6 +246,11 @@ impl<'a> Parser<'a> {
         self.tokens[self.current]
     }
 
+    /// Peeks at the next token plus n
+    fn peek_n(&self, n: usize) -> Token<'a> {
+        self.tokens[self.current + n]
+    }
+
     /// Consumes the next token under the assertion that it is the expected input token
     fn consume(&mut self, tok: &Token<'a>) -> Result<(), ParseError> {
         if &self.peek() == tok {
@@ -255,6 +266,21 @@ impl<'a> Parser<'a> {
         let curr = self.peek();
         self.current += 1;
         curr
+    }
+
+    /// An assignment is `variable = chained` | `chained`
+    fn assignment(&mut self) -> Result<Expr, ParseError> {
+        match (self.peek(), self.peek_n(1)) {
+            (Token::Variable(v), Token::Assign) => {
+                self.advance();
+                self.advance();
+
+                let expr = self.chained()?;
+
+                Ok(Expr::Assignment(v, Box::new(expr)))
+            }
+            _ => self.chained(),
+        }
     }
 
     /// A chain is `comparison ( && | || comparison)`
@@ -419,6 +445,9 @@ impl<'a> Parser<'a> {
                 self.consume(&Token::Bar)?;
                 Ok(Expr::AbsVal(Box::new(inner)))
             }
+
+            Token::Variable(v) => Ok(Expr::Variable(v)),
+
             Token::Ident(ident) => {
                 if let Ok(op) = BinaryOperator::try_from(ident) {
                     self.consume(&Token::OpenParen)?;
@@ -451,7 +480,7 @@ impl<'a> Parser<'a> {
 
     /// Parses the current token span into an AST
     pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        let expr = self.chained()?;
+        let expr = self.assignment()?;
         self.consume(&Token::EOF)?;
 
         Ok(expr)
@@ -700,5 +729,22 @@ mod tests {
         let ast = parser.parse().expect("Failed to parse");
         let mut executor = Evaluator::default();
         assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Bool(true));
+    }
+
+    #[test]
+    fn assign() {
+        let tokens = "x = 100".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+        let mut executor = Evaluator::default();
+        executor.exec(&ast).expect("Eval");
+
+        println!("{:?}", executor.ctx);
+
+        let tokens = "x".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+
+        assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(100));
     }
 }
