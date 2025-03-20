@@ -55,6 +55,7 @@ impl Display for Expr {
                 UnaryOperator::Cos => write!(f, "cos({node})"),
                 UnaryOperator::Sin => write!(f, "sin({node})"),
                 UnaryOperator::Tan => write!(f, "tan({node})"),
+                UnaryOperator::Ln => write!(f, "ln({node})"),
 
                 UnaryOperator::ACos => write!(f, "acos({node})"),
                 UnaryOperator::ASin => write!(f, "asin({node})"),
@@ -85,6 +86,8 @@ impl Display for Expr {
 /// All unary operations
 #[derive(Clone, Debug, PartialEq)]
 pub enum UnaryOperator {
+    /// Natural Log
+    Ln,
     /// Negation
     Neg,
     /// Factorial
@@ -112,6 +115,7 @@ impl TryFrom<&str> for UnaryOperator {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value.to_lowercase().as_str() {
             "neg" => Ok(UnaryOperator::Neg),
+            "ln" => Ok(UnaryOperator::Ln),
             "factorial" => Ok(UnaryOperator::Factorial),
             "floor" => Ok(UnaryOperator::Floor),
             "ceil" => Ok(UnaryOperator::Ceil),

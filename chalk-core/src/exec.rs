@@ -148,6 +148,7 @@ impl UnaryOperator {
             Self::ACos => Ok(EvalResult::Float(expr.float()?.acos())),
             Self::ASin => Ok(EvalResult::Float(expr.float()?.asin())),
             Self::ATan => Ok(EvalResult::Float(expr.float()?.atan())),
+            Self::Ln => Ok(EvalResult::Float(expr.float()?.ln())),
         }
     }
 }
