@@ -179,12 +179,16 @@
               }
 
               function evaluateExpression(expression) {
-                try {
-                  return parser.eval(expression);
-                } catch (e) {
-                  console.error("Error evaluating expression:", e);
-                  return NaN;
-                }
+                  var val = parser.eval(expression);
+                  if (val == "true") {
+                    return 1;
+                  } else if (val == "false") {
+                    return 0;
+                  } else if (val == "???") {
+                    return NaN;
+                  } else {
+                    return val;
+                  }
               }
 
               function drawGraph() {
@@ -250,7 +254,7 @@
                     const x = (pixelX - centerX) / zoom;
 
                     try {
-                       evaluateExpression("x=" + x);
+                       parser.eval("x = " + x)
                        const y = evaluateExpression(exp.text);
 
                       if (isNaN(y) || !isFinite(y)) {
