@@ -1,6 +1,10 @@
 //! WASM Runtime for a web-based chalk runtime
 
-use chalk_core::{ast::Parser, exec::Evaluator, tokenizer::Tokenizable};
+use chalk_core::{
+    ast::{Expr, Parser},
+    exec::Evaluator,
+    tokenizer::Tokenizable,
+};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 /// WASM accessible execution engine for Chalk
@@ -21,7 +25,13 @@ impl MathParser {
 
     /// Checks if an expression depends on a specific variable
     pub fn depends_on(&mut self, expression: String, dep: char) -> bool {
-        todo!()
+        let ast = expression
+            .tokenize()
+            .ok()
+            .and_then(|tokens| Parser::new(tokens).parse().ok())
+            .unwrap_or(Expr::Bool(false));
+
+        self.executor.depends_on(&ast, dep)
     }
 
     /// Evaluates an expression, returning a string of it's evaluation
