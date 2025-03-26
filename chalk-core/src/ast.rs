@@ -39,20 +39,6 @@ pub enum Expr {
     AbsVal(Box<Expr>),
 }
 
-impl Expr {
-    /// Checks if an AST depends on a certain variable
-    pub fn depends_on(&self, dep: char) -> bool {
-        match self {
-            Self::AbsVal(expr) => expr.depends_on(dep),
-            Self::UnaryOp { op: _, node } => node.depends_on(dep),
-            Self::Variable(var) => var == &dep,
-            Self::BinaryOp { op: _, left, right } => left.depends_on(dep) || right.depends_on(dep),
-            Self::Paren(node) => node.depends_on(dep),
-            _ => false,
-        }
-    }
-}
-
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -772,15 +758,5 @@ mod tests {
         let ast = parser.parse().expect("Failed to parse");
 
         assert_eq!(executor.exec(&ast).expect("Eval"), EvalResult::Integer(100));
-    }
-
-    #[test]
-    fn depends_on() {
-        let tokens = "15 + (30 / 100x)".tokenize().expect("Tokenize stream");
-        let mut parser = Parser::new(tokens);
-        let ast = parser.parse().expect("Failed to parse");
-
-        assert!(ast.depends_on('x'));
-        assert!(!ast.depends_on('f'));
     }
 }

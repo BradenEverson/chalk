@@ -29,6 +29,28 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
+    /// Checks if an AST depends on a variable
+    pub fn depends_on(&self, ast: &Expr, dep: char) -> bool {
+        match ast {
+            Expr::AbsVal(expr) => self.depends_on(expr, dep),
+            Expr::UnaryOp { op: _, node } => self.depends_on(node, dep),
+            Expr::Variable(var) => {
+                if var == &dep {
+                    true
+                } else if let Some(sub_ast) = self.ctx.get(var) {
+                    self.depends_on(sub_ast, dep)
+                } else {
+                    false
+                }
+            }
+            Expr::BinaryOp { op: _, left, right } => {
+                self.depends_on(left, dep) || self.depends_on(right, dep)
+            }
+            Expr::Paren(node) => self.depends_on(node, dep),
+            _ => false,
+        }
+    }
+
     /// Executes an AST
     pub fn exec(&mut self, ast: &Expr) -> Result<EvalResult, RuntimeError> {
         match ast {
@@ -176,5 +198,44 @@ impl BinaryOperator {
             Self::And => Ok(EvalResult::Bool(left.bool()? && right.bool()?)),
             Self::Or => Ok(EvalResult::Bool(left.bool()? || right.bool()?)),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        ast::{Expr, Parser},
+        exec::Evaluator,
+        tokenizer::Tokenizable,
+    };
+
+    #[test]
+    fn complex_dependency() {
+        let tokens = "y = 3x + 5".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+
+        let mut eval = Evaluator::default();
+        eval.ctx.insert('x', Expr::Integer(0));
+        eval.exec(&ast).expect("Eval");
+
+        let tokens = "cos(y)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+
+        assert!(eval.depends_on(&ast, 'x'));
+        assert!(!eval.depends_on(&ast, 'f'));
+    }
+
+    #[test]
+    fn depends_on() {
+        let tokens = "15 + (30 / 100x)".tokenize().expect("Tokenize stream");
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().expect("Failed to parse");
+
+        let eval = Evaluator::default();
+
+        assert!(eval.depends_on(&ast, 'x'));
+        assert!(!eval.depends_on(&ast, 'f'));
     }
 }
