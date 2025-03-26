@@ -19,6 +19,11 @@ impl MathParser {
         }
     }
 
+    /// Checks if an expression depends on a specific variable
+    pub fn depends_on(&mut self, expression: String, dep: char) -> bool {
+        todo!()
+    }
+
     /// Evaluates an expression, returning a string of it's evaluation
     pub fn eval(&mut self, expression: String) -> String {
         expression
