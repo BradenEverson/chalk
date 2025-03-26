@@ -10,6 +10,10 @@ export class MathParser {
    */
   constructor();
   /**
+   * Checks if an expression depends on a specific variable
+   */
+  depends_on(expression: string, dep: string): boolean;
+  /**
    * Evaluates an expression, returning a string of it's evaluation
    */
   eval(expression: string): string;
@@ -21,6 +25,7 @@ export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly __wbg_mathparser_free: (a: number, b: number) => void;
   readonly mathparser_new: () => number;
+  readonly mathparser_depends_on: (a: number, b: number, c: number, d: number) => number;
   readonly mathparser_eval: (a: number, b: number, c: number) => [number, number];
   readonly __wbindgen_export_0: WebAssembly.Table;
   readonly __wbindgen_malloc: (a: number, b: number) => number;

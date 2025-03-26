@@ -74,6 +74,10 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 
+function _assertChar(c) {
+    if (typeof(c) === 'number' && (c >= 0x110000 || (c >= 0xD800 && c < 0xE000))) throw new Error(`expected a valid Unicode scalar value, found ${c}`);
+}
+
 const MathParserFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_mathparser_free(ptr >>> 0, 1));
@@ -101,6 +105,20 @@ export class MathParser {
         this.__wbg_ptr = ret >>> 0;
         MathParserFinalization.register(this, this.__wbg_ptr, this);
         return this;
+    }
+    /**
+     * Checks if an expression depends on a specific variable
+     * @param {string} expression
+     * @param {string} dep
+     * @returns {boolean}
+     */
+    depends_on(expression, dep) {
+        const ptr0 = passStringToWasm0(expression, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const char1 = dep.codePointAt(0);
+        _assertChar(char1);
+        const ret = wasm.mathparser_depends_on(this.__wbg_ptr, ptr0, len0, char1);
+        return ret !== 0;
     }
     /**
      * Evaluates an expression, returning a string of it's evaluation
